@@ -1,0 +1,23 @@
+{
+  "name": "gate-executor",
+  "version": "0.1.0",
+  "description": "Execute functions that return via callback in order, but pause if a function is marked as a gate.",
+  "main": "gate-executor.js",
+  "scripts": {
+    "test": "mocha test/*.test.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rjrodger/gate-executor.git"
+  },
+  "keywords": [
+    "gate",
+    "executor"
+  ],
+  "author": "Richard Rodger (http://richardrodger.com)",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/rjrodger/gate-executor/issues"
+  },
+  "homepage": "https://github.com/rjrodger/gate-executor"
+}
