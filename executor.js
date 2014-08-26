@@ -8,7 +8,13 @@ var async = require('async')
 var error = require('eraro')({package:'executor'})
 
 
-var common = require('./common')
+var common = {
+  arrayify: function arrayify() {
+    return Array.prototype.slice.call(arguments[0],arguments[1])
+  },
+  deepextend: function () {},
+  noop: function noop() {}
+}
 
 
 // Create new Executor
