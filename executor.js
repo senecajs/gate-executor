@@ -12,6 +12,7 @@ var common = {
   arrayify: function arrayify() {
     return Array.prototype.slice.call(arguments[0],arguments[1])
   },
+  // TODO: deepextend implementation
   deepextend: function () {},
   noop: function noop() {}
 }
@@ -28,6 +29,13 @@ function Executor( options ) {
     trace:   false,
     stubs:   {Date:{}},
     error:   common.noop,
+    msg_codes: {
+      timeout:   'task-timeout',
+      error:     'task-error',
+      callback:  'task-callback',
+      execute:   'task-execute',
+      abandoned: 'task-abandoned'
+    }
   },options)
 
   var set_timeout   = options.stubs.setTimeout   || setTimeout
@@ -80,7 +88,7 @@ function Executor( options ) {
           var err = new Error('[TIMEOUT]')
           err.timeout = true
 
-          err = error(err,'task-timeout',task)
+          err = error(err,options.msg_codes.timeout,task)
 
           done(err);
         },options.timeout)
@@ -101,7 +109,7 @@ function Executor( options ) {
           }
 
           if( err ) {
-            err = error(err,'task-error',task)
+            err = error(err,options.msg_codes.error,task)
           }
 
           //console.log('EXEC',done)
@@ -110,19 +118,23 @@ function Executor( options ) {
               done(err,out);
             }
             catch(e) {
-              options.error(error(e,'task-callback',task))
+              options.error(error(e,options.msg_codes.callback,task))
             }
           }
         })
       }
       catch(e) {
-        var et = error(e,'task-execute',task)
+        if( toref ) {
+          clear_timeout(toref)
+        }
+
+        var et = error(e,options.msg_codes.execute,task)
         try {
           done(et);
         }
         catch(e) {
           options.error(et)
-          options.error(error(e,'task-error-callback',task))
+          options.error(error(e,options.msg_codes.abandoned,task))
         }
       }
     })
