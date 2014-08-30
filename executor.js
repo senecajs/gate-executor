@@ -14,7 +14,7 @@ var common = {
   },
   // TODO: deepextend implementation
   deepextend: function () {
-    return _.extend(arguments[1], arguments[0])
+    return _.extend(arguments[0], arguments[1])
   },
   noop: function noop() {}
 }
