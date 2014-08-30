@@ -13,7 +13,9 @@ var common = {
     return Array.prototype.slice.call(arguments[0],arguments[1])
   },
   // TODO: deepextend implementation
-  deepextend: function () {},
+  deepextend: function () {
+    return _.extend(arguments[1], arguments[0])
+  },
   noop: function noop() {}
 }
 
