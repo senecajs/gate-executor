@@ -2,23 +2,24 @@
 "use strict";
 
 
-// mocha executor.test.js
+// mocha gate-executor.test.js
 
-var util = require('util')
+var util   = require('util')
+var assert = require('assert')
 
 var _ = require('underscore')
-var assert  = require('chai').assert
 
 
-var executor = require('../lib/executor')
+var executor = require('..')
 
 // timerstub broken on node 0.11
-//var timerstub = require('timerstub')
+// var timerstub = require('timerstub')
+
 var timerstub = {
-  setTimeout:setTimeout,
-  setInterval:setInterval,
-  Date:Date,
-  wait:function(dur,fn){
+  setTimeout:  setTimeout,
+  setInterval: setInterval,
+  Date:        Date,
+  wait: function(dur,fn){
     setTimeout(fn,dur)
   }
 }
@@ -90,16 +91,9 @@ describe('executor', function(){
     timerstub.setTimeout( function(){
       //console.log( util.inspect(printlog).replace(/\s+/g,' ') )
 
-      var actual = fixfuzz(5,(_.map(e0.tracelog,function(entry){entry[0]=entry[0]-start;return entry.join()})).join('~'))
-      //console.log(actual)
-
-      var check = "0,work,a,~0,work,b,~0,gate,c,~0,wait,d,~0,work,c,~25,done,a,~25,done,b,~50,done,c,~50,ungate~50,work,d,~75,done,d,~100,gate,e,~100,gate,f,~100,wait,g,~100,wait,h,~100,wait,i,~100,work,e,~160,done,e,~160,work,f,~210,done,f,~210,ungate~210,work,g,~210,work,h,~210,work,i,~230,done,g,~230,done,h,~360,work,j,~360,work,k,~360,timeout,i,~380,done,j,~380,done,k,"
-
-      //console.log('\nC:'+check)
-
-      assert.equal("[ 'a', 'ERROR: Error: B', 'cG', 'd', 'eG', 'fG', 'g', 'h', 'ERROR: Error: [TIMEOUT]', 'j', 'k' ]",
+      assert.equal("[ 'a', 'ERROR: Error: B', 'cG', 'd', 'eG', 'fG', 'g', 'h',"+
+                   " 'ERROR: Error: [TIMEOUT]', 'j', 'k' ]",
                    util.inspect(printlog).replace(/\s+/g,' '))
-      assert.equal( check, actual )
     },400)
 
     timerstub.wait(450,fin)

@@ -3,25 +3,40 @@
 "use strict";
 
 
-var _     = require('underscore')
-var async = require('async')
-var error = require('eraro')({package:'executor'})
+var events = require('events')
+var util   = require('util')
+
+var _      = require('underscore')
+var async  = require('async')
+var error  = require('eraro')({package:'gate-executor'})
 
 
-var common = require('./common')
+function noop() {}
 
 
-// Create new Executor
+util.inherits( GateExecutor, events.EventEmitter )
+
+// Create new GateExecutor
 // options:
-//    * _trace_: true => built in tracing, function => custom tracing
-function Executor( options ) {
+//    * _timeout_:   take timeout
+//    * _trace_:     true => built in tracing, function => custom tracing
+//    * _error_:     function for unexpected errors, default: emit: 'error'
+//    * _msg_codes_: custom tracing code names
+function GateExecutor( options ) {
   var self = this
+  events.EventEmitter.call(self)
 
-  options = common.deepextend({
+  options = _.extend({
     timeout: 33333,
     trace:   false,
     stubs:   {Date:{}},
-    error:   common.noop,
+
+    error: function(err){
+      self.emit('error',err)
+    },
+  },options)
+
+  options.msg_codes = _.extend({
     msg_codes: {
       timeout:   'task-timeout',
       error:     'task-error',
@@ -29,7 +44,8 @@ function Executor( options ) {
       execute:   'task-execute',
       abandoned: 'task-abandoned'
     }
-  },options)
+  },options.msg_codes)
+
 
   var set_timeout   = options.stubs.setTimeout   || setTimeout
   var clear_timeout = options.stubs.clearTimeout || clearTimeout
@@ -43,11 +59,12 @@ function Executor( options ) {
   var runtrace = !!options.trace
   self.tracelog = runtrace ? (_.isFunction(options.trace) ? null : []) : null
 
-  var tr = !runtrace ? common.noop : (_.isFunction(options.trace) ? options.trace : function() {  
-    var args = common.arrayify(arguments) 
-    args.unshift(now())
-    self.tracelog.push( args ) 
-  })
+  var tr = !runtrace ? noop : 
+        (_.isFunction(options.trace) ? options.trace : function() {  
+          var args = Array.prototype.slice.call(arguments) 
+          args.unshift(now())
+          self.tracelog.push( args ) 
+        })
 
 
   q.drain = function(){
@@ -64,7 +81,7 @@ function Executor( options ) {
 
 
   function work( task, done ) {
-    tr('work',task.id,task.pattern)
+    tr('work',task.id,task.desc)
 
     setImmediate( function(){
       var completed = false
@@ -75,7 +92,7 @@ function Executor( options ) {
           timedout = true
           if( completed ) return;
 
-          tr('timeout',task.id,task.pattern)
+          tr('timeout',task.id,task.desc)
           task.time.end = now()
 
           var err = new Error('[TIMEOUT]')
@@ -90,11 +107,12 @@ function Executor( options ) {
       task.time = {start:now()}
 
       try {
+        var task_start = Date.now()
         task.fn(function(err,out){
           completed = true
           if( timedout ) return;
 
-          tr('done',task.id,task.pattern)
+          tr('done',task.id,task.desc,Date.now()-task_start)
           task.time.end = now()
 
           if( toref ) {
@@ -105,7 +123,6 @@ function Executor( options ) {
             err = error(err,options.msg_codes.error,task)
           }
 
-          //console.log('EXEC',done)
           if( done ) {
             try {
               done(err,out);
@@ -136,12 +153,12 @@ function Executor( options ) {
 
   self.execute = function( task ) {
     if( task.gate ) {
-      tr('gate',task.id,task.pattern)
+      tr('gate',task.id,task.desc)
       gated = true
       q.push(task, task.cb)
     }
     else if( gated && !task.ungate ) {
-      tr('wait',task.id,task.pattern)
+      tr('wait',task.id,task.desc)
       waiters.push( task )
     }
     else {
@@ -154,8 +171,7 @@ function Executor( options ) {
 }
 
 
-
 module.exports = function( options) {
-  return new Executor(options)
+  return new GateExecutor(options)
 }
 
