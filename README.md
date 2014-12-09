@@ -13,6 +13,7 @@ Gating places execution into a serial mode, where all gated work functions must 
 Used by [Seneca](http://senecajs.org/) micro-service communication to execute tasks in order. If you haven't heard about Seneca, check out the [getting started guide](http://senecajs.org/getting-started.html).
 
 
+
 # Usage
 
 The gate executor provides functionality to pause gated tasks and to quit tasks that exceed a given timeout. The executor can be created with a few options:
