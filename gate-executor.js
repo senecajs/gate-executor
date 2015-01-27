@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 Richard Rodger, MIT License */
+/* Copyright (c) 2014-2015 Richard Rodger, MIT License */
 /* jshint node:true, asi:true, eqnull:true */
 "use strict";
 
@@ -6,12 +6,9 @@
 var events = require('events')
 var util   = require('util')
 
-var _      = require('underscore')
+var _      = require('lodash')
 var async  = require('async')
 var error  = require('eraro')({package:'gate-executor'})
-
-
-function noop() {}
 
 
 util.inherits( GateExecutor, events.EventEmitter )
@@ -59,7 +56,7 @@ function GateExecutor( options ) {
   var runtrace = !!options.trace
   self.tracelog = runtrace ? (_.isFunction(options.trace) ? null : []) : null
 
-  var tr = !runtrace ? noop : 
+  var tr = !runtrace ? _.noop : 
         (_.isFunction(options.trace) ? options.trace : function() {  
           var args = Array.prototype.slice.call(arguments) 
           args.unshift(now())

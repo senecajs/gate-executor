@@ -21,9 +21,9 @@
   },
   "homepage": "https://github.com/rjrodger/gate-executor",
   "dependencies": {
-    "underscore": "~1.7.0",
+    "lodash": "~2.4.1",
     "async": "~0.9.0",
-    "eraro": "~0.1.6"
+    "eraro": "~0.4.0"
   },
   "devDependencies": {
     "mocha": "~1.20.1"

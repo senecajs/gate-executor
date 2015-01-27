@@ -1,4 +1,4 @@
-/* Copyright (c) 2014 Richard Rodger, MIT License */
+/* Copyright (c) 2014-2015 Richard Rodger, MIT License */
 "use strict";
 
 
@@ -7,7 +7,7 @@
 var util   = require('util')
 var assert = require('assert')
 
-var _ = require('underscore')
+var _ = require('lodash')
 
 
 var executor = require('..')
@@ -91,8 +91,9 @@ describe('executor', function(){
     timerstub.setTimeout( function(){
       //console.log( util.inspect(printlog).replace(/\s+/g,' ') )
 
-      assert.equal("[ 'a', 'ERROR: Error: B', 'cG', 'd', 'eG', 'fG', 'g', 'h',"+
-                   " 'ERROR: Error: [TIMEOUT]', 'j', 'k' ]",
+      assert.equal("[ 'a', 'ERROR: Error: gate-executor: B',"+
+                   " 'cG', 'd', 'eG', 'fG', 'g', 'h',"+
+                   " 'ERROR: Error: gate-executor: [TIMEOUT]', 'j', 'k' ]",
                    util.inspect(printlog).replace(/\s+/g,' '))
     },400)
 
