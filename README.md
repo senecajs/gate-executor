@@ -71,3 +71,9 @@ The worker definition object has the following properties:
     * _ungate_: this worker will ignore any gates that are active, and so will be executed regardless.
 
 
+# Testing
+
+```js
+npm test
+```
+
