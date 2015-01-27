@@ -63,12 +63,12 @@ e0.execute({
 
 The worker definition object has the following properties:
 
-    * _id_:     an identifier string for the worker.
-    * _desc_:   a description string for the worker.
-    * _fn_:     the worker function itself; it should accept one argument, a completion callback, which must be called (this in turn then calls the task callback, if any).
-    * _cb_:     optional callback function, of the form: function(err,result) { ... }.
-    * _gate_:   this worker is a gate; all subsequent workers will wait for this one to complete.
-    * _ungate_: this worker will ignore any gates that are active, and so will be executed regardless.
+   * _id_:     an identifier string for the worker.
+   * _desc_:   a description string for the worker.
+   * _fn_:     the worker function itself; it should accept one argument, a completion callback, which must be called (this in turn then calls the task callback, if any).
+   * _cb_:     optional callback function, of the form: function(err,result) { ... }.
+   * _gate_:   this worker is a gate; all subsequent workers will wait for this one to complete.
+   * _ungate_: this worker will ignore any gates that are active, and so will be executed regardless.
 
 
 # Testing
