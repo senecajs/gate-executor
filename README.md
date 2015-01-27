@@ -2,7 +2,7 @@
 
 #### Execute functions that return via callback in order, but pause if a function is marked as a gate.
 
-Current Version: 0.2.1
+Current Version: 0.2.2
 
 Tested on: Node 0.10.35
 

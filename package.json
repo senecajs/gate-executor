@@ -1,6 +1,6 @@
 {
   "name": "gate-executor",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "description": "Execute functions that return via callback in order, but pause if a function is marked as a gate.",
   "main": "gate-executor.js",
   "scripts": {
@@ -24,7 +24,7 @@
   "dependencies": {
     "lodash": "~2.4.1",
     "async": "~0.9.0",
-    "eraro": "~0.4.0"
+    "eraro": "~0.4.1"
   },
   "contributors": [
     "Jacob Pruitt (http://javascriptjake.com)"
