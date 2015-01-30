@@ -1,5 +1,7 @@
 # gate-executor
 
+[![Gitter](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/rjrodger/gate-executor?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
+
 #### Execute functions that return via callback in order, but pause if a function is marked as a gate.
 
 Current Version: 0.2.2
