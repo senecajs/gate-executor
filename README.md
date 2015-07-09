@@ -2,9 +2,9 @@
 
 #### Execute functions that return via callback in order, but pause if a function is marked as a gate.
 
-Current Version: 0.2.2
+Current Version: 0.2.3
 
-Tested on: Node 0.10.35
+Tested on: Node 0.10, 0.11, 0.12, iojs.
 
 [![Build Status](https://travis-ci.org/rjrodger/gate-executor.png?branch=master)](https://travis-ci.org/rjrodger/gate-executor)
 
