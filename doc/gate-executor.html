@@ -39,7 +39,7 @@
 <span class="hljs-keyword">var</span> util   = <span class="hljs-built_in">require</span>(<span class="hljs-string">'util'</span>)
 
 <span class="hljs-keyword">var</span> _      = <span class="hljs-built_in">require</span>(<span class="hljs-string">'lodash'</span>)
-<span class="hljs-keyword">var</span> async  = <span class="hljs-built_in">require</span>(<span class="hljs-string">'async'</span>)
+<span class="hljs-keyword">var</span> <span class="hljs-keyword">async</span>  = <span class="hljs-built_in">require</span>(<span class="hljs-string">'async'</span>)
 <span class="hljs-keyword">var</span> error  = <span class="hljs-built_in">require</span>(<span class="hljs-string">'eraro'</span>)({package:<span class="hljs-string">'gate-executor'</span>})
 
 
@@ -65,7 +65,7 @@ options:</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">GateExecutor</span><span class="hljs-params">( options )</span> </span>{
+            <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">GateExecutor</span>(<span class="hljs-params"> options </span>) </span>{
   <span class="hljs-keyword">var</span> self = <span class="hljs-keyword">this</span>
   events.EventEmitter.call(self)
 
@@ -74,7 +74,7 @@ options:</p>
     trace:   <span class="hljs-literal">false</span>,
     stubs:   {<span class="hljs-built_in">Date</span>:{}},
 
-    error: <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err)</span></span>{
+    error: <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err</span>)</span>{
       self.emit(<span class="hljs-string">'error'</span>,err)
     },
   },options)
@@ -94,7 +94,7 @@ options:</p>
   <span class="hljs-keyword">var</span> clear_timeout = options.stubs.clearTimeout || clearTimeout
   <span class="hljs-keyword">var</span> now           = options.stubs.Date.now     || <span class="hljs-built_in">Date</span>.now
 
-  <span class="hljs-keyword">var</span> q = async.queue(work,<span class="hljs-number">1</span>)
+  <span class="hljs-keyword">var</span> q = <span class="hljs-keyword">async</span>.queue(work,<span class="hljs-number">1</span>)
 
   <span class="hljs-keyword">var</span> gated   = <span class="hljs-literal">false</span>
   <span class="hljs-keyword">var</span> waiters = []
@@ -103,14 +103,14 @@ options:</p>
   self.tracelog = runtrace ? (_.isFunction(options.trace) ? <span class="hljs-literal">null</span> : []) : <span class="hljs-literal">null</span>
 
   <span class="hljs-keyword">var</span> tr = !runtrace ? _.noop : 
-        (_.isFunction(options.trace) ? options.trace : <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span> </span>{  
+        (_.isFunction(options.trace) ? options.trace : <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>) </span>{  
           <span class="hljs-keyword">var</span> args = <span class="hljs-built_in">Array</span>.prototype.slice.call(<span class="hljs-built_in">arguments</span>) 
           args.unshift(now())
           self.tracelog.push( args ) 
         })
 
 
-  q.drain = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+  q.drain = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
     <span class="hljs-comment">/* jshint boss:true */</span>
 
     tr(<span class="hljs-string">'ungate'</span>)
@@ -123,15 +123,15 @@ options:</p>
   }
 
 
-  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">work</span><span class="hljs-params">( task, done )</span> </span>{
+  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">work</span>(<span class="hljs-params"> task, done </span>) </span>{
     tr(<span class="hljs-string">'work'</span>,task.id,task.desc)
 
-    setImmediate( <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+    setImmediate( <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
       <span class="hljs-keyword">var</span> completed = <span class="hljs-literal">false</span>
       <span class="hljs-keyword">var</span> timedout  = <span class="hljs-literal">false</span>
 
       <span class="hljs-keyword">if</span>( done ) {
-        <span class="hljs-keyword">var</span> toref = set_timeout(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">()</span></span>{
+        <span class="hljs-keyword">var</span> toref = set_timeout(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"></span>)</span>{
           timedout = <span class="hljs-literal">true</span>
           <span class="hljs-keyword">if</span>( completed ) <span class="hljs-keyword">return</span>;
 
@@ -151,7 +151,9 @@ options:</p>
 
       <span class="hljs-keyword">try</span> {
         <span class="hljs-keyword">var</span> task_start = <span class="hljs-built_in">Date</span>.now()
-        task.fn(<span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">(err,out)</span></span>{
+        task.fn(<span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params">err,out</span>)</span>{
+          <span class="hljs-keyword">var</span> args = <span class="hljs-built_in">Array</span>.prototype.slice.call(<span class="hljs-built_in">arguments</span>)
+
           completed = <span class="hljs-literal">true</span>
           <span class="hljs-keyword">if</span>( timedout ) <span class="hljs-keyword">return</span>;
 
@@ -163,12 +165,12 @@ options:</p>
           }
 
           <span class="hljs-keyword">if</span>( err ) {
-            err = error(err,options.msg_codes.error,task)
+            args[<span class="hljs-number">0</span>] = error(err,options.msg_codes.error,task)
           }
 
           <span class="hljs-keyword">if</span>( done ) {
             <span class="hljs-keyword">try</span> {
-              done(err,out);
+              done.apply(<span class="hljs-literal">null</span>,args)
             }
             <span class="hljs-keyword">catch</span>(e) {
               options.error(error(e,options.msg_codes.callback,task))
@@ -183,7 +185,7 @@ options:</p>
 
         <span class="hljs-keyword">var</span> et = error(e,options.msg_codes.execute,task)
         <span class="hljs-keyword">try</span> {
-          done(et);
+          done(et)
         }
         <span class="hljs-keyword">catch</span>(e) {
           options.error(et)
@@ -194,7 +196,7 @@ options:</p>
   }
 
 
-  self.execute = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">( task )</span> </span>{
+  self.execute = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"> task </span>) </span>{
     <span class="hljs-keyword">if</span>( task.gate ) {
       tr(<span class="hljs-string">'gate'</span>,task.id,task.desc)
       gated = <span class="hljs-literal">true</span>
@@ -214,7 +216,7 @@ options:</p>
 }
 
 
-<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span><span class="hljs-params">( options)</span> </span>{
+<span class="hljs-built_in">module</span>.exports = <span class="hljs-function"><span class="hljs-keyword">function</span>(<span class="hljs-params"> options</span>) </span>{
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> GateExecutor(options)
 }</pre></div></div>
             

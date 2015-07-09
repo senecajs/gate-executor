@@ -106,6 +106,8 @@ function GateExecutor( options ) {
       try {
         var task_start = Date.now()
         task.fn(function(err,out){
+          var args = Array.prototype.slice.call(arguments)
+
           completed = true
           if( timedout ) return;
 
@@ -117,12 +119,12 @@ function GateExecutor( options ) {
           }
 
           if( err ) {
-            err = error(err,options.msg_codes.error,task)
+            args[0] = error(err,options.msg_codes.error,task)
           }
 
           if( done ) {
             try {
-              done(err,out);
+              done.apply(null,args)
             }
             catch(e) {
               options.error(error(e,options.msg_codes.callback,task))
@@ -137,7 +139,7 @@ function GateExecutor( options ) {
 
         var et = error(e,options.msg_codes.execute,task)
         try {
-          done(et);
+          done(et)
         }
         catch(e) {
           options.error(et)
