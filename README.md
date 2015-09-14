@@ -40,7 +40,7 @@ with a few options:
 ```JavaScript
 var e0 = executor({
   trace: true,              // Error logging trace, default false
-  timeout: 150,             // Timout for tasks, default 3333
+  timeout: 150,             // Timout for tasks, default 33333
   error: function() {...},  // A function to wrap all errors in, default noop
   stubs: {		    // Stubs to substitute default node functions
     now: {...},
