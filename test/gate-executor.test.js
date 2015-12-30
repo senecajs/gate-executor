@@ -1,13 +1,17 @@
 /* Copyright (c) 2014-2015 Richard Rodger, MIT License */
 "use strict";
 
-
-// mocha gate-executor.test.js
-
 var util   = require('util')
-var assert = require('assert')
-
 var _ = require('lodash')
+
+var Lab = require('lab')
+var Code = require('code')
+
+var lab = exports.lab = Lab.script()
+var describe = lab.describe
+var it = lab.it
+var expect = Code.expect
+
 
 
 var executor = require('..')
@@ -25,11 +29,10 @@ var timerstub = {
 }
 
 
-
 describe('executor', function(){
 
-  it('happy', function(fin) {
-    if( ~process.version.indexOf('0.11.') ) return fin();
+  it('happy', function(done) {
+    if( ~process.version.indexOf('0.11.') ) return done();
 
     var e0 = executor({
       trace:true,
@@ -88,20 +91,20 @@ describe('executor', function(){
     }
 
 
-    timerstub.setTimeout( function(){
+    timerstub.setTimeout(function(){
       //console.log( util.inspect(printlog).replace(/\s+/g,' ') )
 
-      assert.equal("[ 'a', 'ERROR: Error: gate-executor: B',"+
-                   " 'cG', 'd', 'eG', 'fG', 'g', 'h',"+
-                   " 'ERROR: Error: gate-executor: [TIMEOUT]', 'j', 'k' ]",
-                   util.inspect(printlog).replace(/\s+/g,' '))
+      expect(printlog).to.deep.equal([ 'a', 'ERROR: Error: gate-executor: B',
+         'cG', 'd', 'eG', 'fG', 'g', 'h',
+         'ERROR: Error: gate-executor: [TIMEOUT]', 'j', 'k' ])
+
     },400)
 
-    timerstub.wait(450,fin)
+    timerstub.wait(450, done)
   })
 
 
-  it('no-callback',function(fin){
+  it('no-callback', function (done){
     var e1 = executor({
       trace:true,
       timeout:30,
@@ -112,13 +115,13 @@ describe('executor', function(){
     var start = timerstub.Date.now()
     e1.execute({id:'a',fn:function(done){t1=true;done()}})
     timerstub.wait(90,function(){
-      assert.ok(t1)
-      fin()
+      expect(t1).to.be.true()
+      done()
     })
   })
 
 
-  it('ignore-gate',function(fin){
+  it('ignore-gate', function (done){
     var e1 = executor({
       trace:true,
       timeout:20,
@@ -127,32 +130,31 @@ describe('executor', function(){
 
     var seq = ''
 
+    e1.execute({id:'a', fn:function(done){ seq+='a';done() }})
 
-    e1.execute({id:'a',fn:function(done){seq+='a';done()}})
-    e1.execute({id:'b',gate:true,fn:function(done){
-      seq+='b'
+    e1.execute({id:'b', gate: true, fn: function(done){
+      seq += 'b'
 
-      e1.execute({id:'c',ungate:true,fn:function(done2){
-        seq+='c'
+      e1.execute({id:'c', ungate:true, fn: function(done2){
+        seq += 'c'
 
         done2()
         done()
       }})
 
-      e1.execute({id:'d',gate:true,fn:function(done3){
+      e1.execute({id: 'd', gate:true, fn:function(done3){
         seq+='d'
         timerstub.setTimeout(done3,20)
       }})
-
       
     }})
-    e1.execute({id:'e',fn:function(done){seq+='e';done()}})
+    e1.execute({id:'e',fn:function(done){ seq+='e';done()}})
 
     timerstub.wait(40,function(){
       //console.log('SEQ '+seq)
 
-      assert.equal('abcde',seq)
-      fin()
+      expect(seq).to.equal('abcde')
+      done()
     })
   })
 
