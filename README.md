@@ -1,12 +1,12 @@
 # gate-executor
 
+[![npm version][npm-badge]][npm-url]
+[![Build Status][travis-badge]][travis-url]
+[![Coverage Status][coveralls-badge]][coveralls-url]
+[![Dependency Status][david-badge]][david-url]
+[![Gitter chat][gitter-badge]][gitter-url]
+
 #### Execute functions that return via callback in order, but pause if a function is marked as a gate.
-
-Current Version: 0.2.3
-
-Tested on: Node 0.10, 0.11, 0.12, iojs.
-
-[![Build Status](https://travis-ci.org/rjrodger/gate-executor.png?branch=master)](https://travis-ci.org/rjrodger/gate-executor)
 
 [Annotated Source](http://rjrodger.github.io/gate-executor/doc/gate-executor.html)
 
@@ -27,9 +27,6 @@ the [getting started guide](http://senecajs.org/getting-started.html).
 
 If you're using this module, feel free to contact me on twitter if you
 have any questions! :) [@rjrodger](http://twitter.com/rjrodger)
-
-[![Gitter chat](https://badges.gitter.im/rjrodger/gate-executor.png)](https://gitter.im/rjrodger/gate-executor)
-
 
 # Usage
 
@@ -77,3 +74,13 @@ The worker definition object has the following properties:
 npm test
 ```
 
+[npm-badge]: https://badge.fury.io/js/gate-executor.svg
+[npm-url]: https://badge.fury.io/js/gate-executor
+[travis-badge]: https://api.travis-ci.org/rjrodger/gate-executor.svg
+[travis-url]: https://travis-ci.org/rjrodger/gate-executor
+[coveralls-badge]:https://coveralls.io/repos/rjrodger/gate-executor/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/rjrodger/gate-executor?branch=master
+[david-badge]: https://david-dm.org/rjrodger/gate-executor.svg
+[david-url]: https://david-dm.org/rjrodger/gate-executor
+[gitter-badge]: https://badges.gitter.im/rjrodger/gate-executor.svg
+[gitter-url]: https://gitter.im/rjrodger/gate-executor
