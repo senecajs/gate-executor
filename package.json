@@ -5,6 +5,7 @@
   "main": "gate-executor.js",
   "scripts": {
     "test": "lab",
+    "coverage": "lab -s -r lcov | coveralls",
     "build": "./build.sh"
   },
   "repository": {
@@ -31,6 +32,7 @@
   },
   "devDependencies": {
     "code": "^1.5.0",
+    "coveralls": "^2.11.6",
     "lab": "^6.2.0"
   }
 }
