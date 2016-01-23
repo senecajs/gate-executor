@@ -17,6 +17,9 @@
     "executor"
   ],
   "author": "Richard Rodger (http://richardrodger.com)",
+  "contributors": [
+    "Jacob Pruitt (http://javascriptjake.com)"
+  ],
   "license": "MIT",
   "bugs": {
     "url": "https://github.com/rjrodger/gate-executor/issues"
@@ -30,8 +33,5 @@
   "devDependencies": {
     "code": "2.1.0",
     "lab": "8.2.0"
-  },
-  "contributors": [
-    "Jacob Pruitt (http://javascriptjake.com)"
-  ]
+  }
 }
