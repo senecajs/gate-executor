@@ -28,8 +28,12 @@ function GateExecutor( options ) {
     trace:   false,
     stubs:   {Date:{}},
 
-    error: function(err){
+    error: function(err) {
       self.emit('error',err)
+    },
+
+    clear: function() {
+      self.emit('clear')
     },
   },options)
 
@@ -50,8 +54,9 @@ function GateExecutor( options ) {
 
   var q = async.queue(work,1)
 
-  var gated   = false
-  var waiters = []
+  var gated    = false
+  var waiters  = []
+  var inflight = 0
 
   var runtrace = !!options.trace
   self.tracelog = runtrace ? (_.isFunction(options.trace) ? null : []) : null
@@ -67,7 +72,7 @@ function GateExecutor( options ) {
   q.drain = function(){
     /* jshint boss:true */
 
-    tr('ungate')
+    tr('ungate',gated,inflight)
     gated = false
 
     var task = null
@@ -78,7 +83,17 @@ function GateExecutor( options ) {
 
 
   function work( task, done ) {
-    tr('work',task.id,task.desc)
+    tr('work',gated,inflight,task.id,task.desc)
+
+    function check_clear() {
+      inflight--
+
+      //console.log(inflight, waiters.length, q.length())
+      if( 0 == inflight && 0 === waiters.length && 0 === q.length() ) {
+        tr('clear',gated,inflight)
+        options.clear()
+      }
+    }
 
     setImmediate( function(){
       var completed = false
@@ -89,7 +104,7 @@ function GateExecutor( options ) {
           timedout = true
           if( completed ) return;
 
-          tr('timeout',task.id,task.desc)
+          tr('timeout',gated,inflight,task.id,task.desc)
           task.time.end = now()
 
           var err = new Error('[TIMEOUT]')
@@ -97,7 +112,14 @@ function GateExecutor( options ) {
 
           err = error(err,options.msg_codes.timeout,task)
 
-          done(err);
+          try {
+            done(err,null)
+          }
+          catch(e) {
+            options.error(error(e,options.msg_codes.callback,task))
+          }
+
+          check_clear()
         },options.timeout)
       }
 
@@ -109,9 +131,9 @@ function GateExecutor( options ) {
           var args = Array.prototype.slice.call(arguments)
 
           completed = true
-          if( timedout ) return;
+          if( timedout ) return
 
-          tr('done',task.id,task.desc,Date.now()-task_start)
+          tr('done',gated,inflight,task.id,task.desc,Date.now()-task_start)
           task.time.end = now()
 
           if( toref ) {
@@ -120,6 +142,7 @@ function GateExecutor( options ) {
 
           if( err ) {
             args[0] = error(err,options.msg_codes.error,task)
+            args[1] = args[1] || null
           }
 
           if( done ) {
@@ -130,6 +153,8 @@ function GateExecutor( options ) {
               options.error(error(e,options.msg_codes.callback,task))
             }
           }
+
+          check_clear()
         })
       }
       catch(e) {
@@ -139,28 +164,33 @@ function GateExecutor( options ) {
 
         var et = error(e,options.msg_codes.execute,task)
         try {
-          done(et)
+          done(et,null)
         }
         catch(e) {
           options.error(et)
           options.error(error(e,options.msg_codes.abandoned,task))
         }
+
+        check_clear()
       }
     })
   }
 
 
   self.execute = function( task ) {
+    inflight++
+
     if( task.gate ) {
-      tr('gate',task.id,task.desc)
+      tr('gate',gated,inflight,task.id,task.desc)
       gated = true
       q.push(task, task.cb)
     }
     else if( gated && !task.ungate ) {
-      tr('wait',task.id,task.desc)
+      tr('wait',gated,inflight,task.id,task.desc)
       waiters.push( task )
     }
     else {
+      tr('run',gated,inflight,task.id,task.desc)
       work( task, task.cb )
     }
   }

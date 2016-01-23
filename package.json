@@ -4,7 +4,8 @@
   "description": "Execute functions that return via callback in order, but pause if a function is marked as a gate.",
   "main": "gate-executor.js",
   "scripts": {
-    "test": "./test.sh",
+    "cov": "lab -s -P test -r html > test/coverage.html",
+    "test": "lab -v -P test -t 90",
     "build": "./build.sh"
   },
   "repository": {
@@ -22,9 +23,13 @@
   },
   "homepage": "https://github.com/rjrodger/gate-executor",
   "dependencies": {
-    "lodash": "2.4.2",
-    "async": "0.9.2",
-    "eraro": "0.4.1"
+    "async": "1.5.2",
+    "eraro": "0.4.1",
+    "lodash": "4.0.0"
+  },
+  "devDependencies": {
+    "code": "2.1.0",
+    "lab": "8.2.0"
   },
   "contributors": [
     "Jacob Pruitt (http://javascriptjake.com)"
