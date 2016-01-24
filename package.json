@@ -32,6 +32,6 @@
   },
   "devDependencies": {
     "code": "2.1.0",
-    "lab": "8.0.2"
+    "lab": "7.3.0"
   }
 }
