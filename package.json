@@ -31,7 +31,7 @@
     "lodash": "4.0.0"
   },
   "devDependencies": {
-    "code": "2.1.0",
+    "code": "1.5.0",
     "lab": "6.2.0"
   }
 }
