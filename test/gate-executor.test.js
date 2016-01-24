@@ -92,6 +92,7 @@ describe('executor', function(){
 
     timerstub.setTimeout(function(){
       //console.log( util.inspect(printlog).replace(/\s+/g,' ') )
+      printlog[8] = printlog[8].replace(/\[TIMEOUT.*\]/,'[TIMEOUT]')
 
       expect(printlog).to.deep.equal([ 'a', 'ERROR: Error: gate-executor: B',
          'cG', 'd', 'eG', 'fG', 'g', 'h',

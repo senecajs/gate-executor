@@ -1,6 +1,6 @@
 {
   "name": "gate-executor",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "description": "Execute functions that return via callback in order, but pause if a function is marked as a gate.",
   "main": "gate-executor.js",
   "scripts": {

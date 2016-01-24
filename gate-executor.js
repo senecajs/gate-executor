@@ -108,7 +108,11 @@ function GateExecutor( options ) {
           tr('timeout',gated,inflight,task.id,task.desc)
           task.time.end = now()
 
-          var err = new Error('[TIMEOUT]')
+          var err = new Error(
+            '[TIMEOUT:'+task.id+':'+
+              options.timeout+'<'+task.time.end+'-'+task.time.start+':'+
+              task.desc+']')
+
           err.timeout = true
 
           err = error(err,options.msg_codes.timeout,task)
