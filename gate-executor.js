@@ -89,7 +89,8 @@ function GateExecutor( options ) {
       inflight--
 
       //console.log(inflight, waiters.length, q.length())
-      if( 0 == inflight && 0 === waiters.length && 0 === q.length() ) {
+      //if( 0 == inflight && 0 === waiters.length && 0 === q.length() ) {
+      if( self.clear() ) {
         tr('clear',gated,inflight)
         options.clear()
       }
@@ -195,6 +196,10 @@ function GateExecutor( options ) {
     }
   }
 
+
+  self.clear = function() {
+    return ( 0 == inflight && 0 === waiters.length && 0 === q.length() )
+  }
   
   return self
 }
