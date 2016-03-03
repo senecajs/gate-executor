@@ -40,18 +40,18 @@ describe('executor', function(){
     })
 
     var printlog = []
-    
+
     function print(err,out){
       if( err ) return printlog.push('ERROR: '+err)
       printlog.push(''+out)
     }
 
     function mfn(a,d) {
-      var f = function(cb){ 
+      var f = function(cb){
         timerstub.setTimeout(function(){
           if( 'b'==a ) return cb(new Error('B'));
           cb(null,a)
-        },d) 
+        },d)
       }
       return f
     }
@@ -146,7 +146,7 @@ describe('executor', function(){
         seq+='d'
         timerstub.setTimeout(done3,20)
       }})
-      
+
     }})
     e1.execute({id:'e',fn:function(done){ seq+='e';done()}})
 
@@ -165,7 +165,7 @@ describe('executor', function(){
       timeout:100,
       stubs:timerstub
     })
-    
+
     var log = []
 
     function mfn (id,t) {
@@ -195,7 +195,7 @@ describe('executor', function(){
       if( 2 === cI ) {
         //console.log(log)
 
-        expect(log).to.deep.equal( 
+        expect(log).to.deep.equal(
           [ 0,
             1,
             'c0~null~0',
@@ -213,8 +213,8 @@ describe('executor', function(){
             'c4~null~4',
             7,
             'c7~null~7',
-            'c2' ]  
-        )        
+            'c2' ]
+        )
         fin()
       }
     })
@@ -235,6 +235,82 @@ describe('executor', function(){
     }, 200)
   })
 
+  it('can override timeout', function (fin) {
+    var e1 = executor({
+      trace:true,
+      timeout:5000,
+      stubs:timerstub
+    })
+
+    var log = []
+
+    function mfn (id,t) {
+      return function(done) {
+        log.push(id)
+        if( t ) {
+          setTimeout(function(){done(null,id)},t)
+        }
+        else done(null,id)
+      }
+    }
+
+    function mcb (id) {
+      return function(err,out) {
+        //console.log('c',id,err,out)
+        log.push('c'+id+'~'+(err&&err.timeout)+'~'+out)
+      }
+    }
+
+    var cI = 0
+    e1.on('clear', function () {
+      cI++
+      log.push('c'+cI)
+      //console.log(cI, e1.tracelog)
+      //console.log(log)
+
+      if( 2 === cI ) {
+        //console.log(log)
+
+        expect(log).to.deep.equal(
+          [ 0,
+            1,
+            'c0~null~0',
+            'c1~true~null',
+            'c1',
+            5,
+            'c5~null~5',
+            2,
+            'c2~null~2',
+            3,
+            'c3~true~null',
+            6,
+            'c6~null~6',
+            4,
+            'c4~null~4',
+            7,
+            'c7~null~7',
+            'c2' ]
+        )
+        fin()
+      }
+    })
+
+    // seq: 0,1
+    e1.execute({id:0,fn:mfn(0,50),cb:mcb(0),timeout:100})
+    e1.execute({id:1,fn:mfn(1,200),cb:mcb(1),timeout:100})
+
+    setTimeout( function() {
+
+      // seq: 5,2,3,6,4,7
+      e1.execute({id:2,gate:true,fn:mfn(2,10),cb:mcb(2),timeout:100})
+      e1.execute({id:3,gate:true,fn:mfn(3,200),cb:mcb(3),timeout:100})
+      e1.execute({id:4,fn:mfn(4),cb:mcb(4),timeout:100})
+      e1.execute({id:5,ungate:true,fn:mfn(5),cb:mcb(5),timeout:100})
+      e1.execute({id:6,gate:true,fn:mfn(6,10),cb:mcb(6),timeout:100})
+      e1.execute({id:7,fn:mfn(7),cb:mcb(7,10),timeout:100})
+    }, 200)
+  })
+
 
   it('determinism', function (fin) {
     var e1 = executor({
@@ -242,7 +318,7 @@ describe('executor', function(){
       timeout:100,
       stubs:timerstub
     })
-    
+
     var log = []
     function mfn (id,t) {
       return function(done) {
@@ -263,10 +339,10 @@ describe('executor', function(){
       if( 4 === cI ) {
         //console.log(log)
 
-        expect(log).to.deep.equal( 
+        expect(log).to.deep.equal(
           [ 0, 1, 'c1', 2, 3, 'c2', 4, 6, 5, 'c3', 9, 7, 10, 8, 'c4' ]
         )
-        
+
         fin()
       }
     })
@@ -307,14 +383,14 @@ describe('executor', function(){
       timeout:100,
       stubs:timerstub
     })
-    
+
 
     var log = []
 
     e1.on('error',function(err) {
       log.push('EE~'+err.message)
     })
-    
+
 
     var MODE = {
       ok:0,
@@ -343,7 +419,7 @@ describe('executor', function(){
       return function(err,out) {
         //console.log('c',id,err,out)
         log.push('c'+id+'~'+(err&&err.message)+'~'+out)
-        
+
         if( MODE.throw === mode ) throw new Error('CCC')
       }
     }
@@ -358,7 +434,7 @@ describe('executor', function(){
       if( 1 === cI ) {
         //console.log(log)
 
-        expect(log).to.deep.equal( 
+        expect(log).to.deep.equal(
           [ 0,
             'c0~null~0',
             1,
@@ -369,7 +445,7 @@ describe('executor', function(){
             'c3~null~3',
             'EE~gate-executor: CCC',
             'c1' ]
-        )        
+        )
         fin()
       }
     })
@@ -380,5 +456,5 @@ describe('executor', function(){
     e1.execute({id:2,fn:mfn(MODE.cberr,2),cb:mcb(MODE.ok,2)})
     e1.execute({id:3,fn:mfn(MODE.ok,3),cb:mcb(MODE.throw,3)})
   })
-  
+
 })
