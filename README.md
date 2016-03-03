@@ -66,6 +66,7 @@ The worker definition object has the following properties:
    * _cb_:     optional callback function, of the form: function(err,result) { ... }.
    * _gate_:   this worker is a gate; all subsequent workers will wait for this one to complete.
    * _ungate_: this worker will ignore any gates that are active, and so will be executed regardless.
+   * _timeout_: override the executor timeout for this individual work
 
 
 # Testing

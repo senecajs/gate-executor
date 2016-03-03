@@ -61,11 +61,11 @@ function GateExecutor( options ) {
   var runtrace = !!options.trace
   self.tracelog = runtrace ? (_.isFunction(options.trace) ? null : []) : null
 
-  var tr = !runtrace ? _.noop : 
-        (_.isFunction(options.trace) ? options.trace : function() {  
-          var args = Array.prototype.slice.call(arguments) 
+  var tr = !runtrace ? _.noop :
+        (_.isFunction(options.trace) ? options.trace : function() {
+          var args = Array.prototype.slice.call(arguments)
           args.unshift(now())
-          self.tracelog.push( args ) 
+          self.tracelog.push( args )
         })
 
 
@@ -99,6 +99,7 @@ function GateExecutor( options ) {
     setImmediate( function(){
       var completed = false
       var timedout  = false
+      var timeout = (typeof task.timeout === 'number') ? task.timeout : options.timeout
 
       if( done ) {
         var toref = set_timeout(function(){
@@ -110,7 +111,7 @@ function GateExecutor( options ) {
 
           var err = new Error(
             '[TIMEOUT:'+task.id+':'+
-              options.timeout+'<'+task.time.end+'-'+task.time.start+':'+
+              timeout+'<'+task.time.end+'-'+task.time.start+':'+
               task.desc+']')
 
           err.timeout = true
@@ -125,7 +126,7 @@ function GateExecutor( options ) {
           }
 
           check_clear()
-        },options.timeout)
+        }, timeout)
       }
 
       task.time = {start:now()}
@@ -204,7 +205,7 @@ function GateExecutor( options ) {
   self.clear = function() {
     return ( 0 == inflight && 0 === waiters.length && 0 === q.length() )
   }
-  
+
   return self
 }
 
@@ -212,4 +213,3 @@ function GateExecutor( options ) {
 module.exports = function( options) {
   return new GateExecutor(options)
 }
-
