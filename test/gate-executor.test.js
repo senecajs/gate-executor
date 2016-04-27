@@ -384,27 +384,16 @@ describe('executor', function(){
       stubs:timerstub
     })
 
-
     var log = []
-
-    e1.on('error',function(err) {
-      log.push('EE~'+err.message)
-    })
-
 
     var MODE = {
       ok:0,
-      throw:1,
       cberr:2
     }
 
     function mfn (mode,id,t) {
       return function(done) {
         log.push(id)
-
-        if( MODE.throw === mode ) {
-          throw new Error('AAA')
-        }
 
         var err = MODE.cberr === mode ? new Error('BBB') : null
 
@@ -419,8 +408,6 @@ describe('executor', function(){
       return function(err,out) {
         //console.log('c',id,err,out)
         log.push('c'+id+'~'+(err&&err.message)+'~'+out)
-
-        if( MODE.throw === mode ) throw new Error('CCC')
       }
     }
 
@@ -437,14 +424,10 @@ describe('executor', function(){
         expect(log).to.deep.equal(
           [ 0,
             'c0~null~0',
-            1,
-            'c1~gate-executor: AAA~null',
             2,
             'c2~gate-executor: BBB~2',
-            3,
-            'c3~null~3',
-            'EE~gate-executor: CCC',
-            'c1' ]
+            'c1'
+          ]
         )
         fin()
       }
@@ -452,9 +435,7 @@ describe('executor', function(){
 
     // seq: 0,1
     e1.execute({id:0,fn:mfn(MODE.ok,0),cb:mcb(MODE.ok,0)})
-    e1.execute({id:1,fn:mfn(MODE.throw,1),cb:mcb(MODE.ok,1)})
     e1.execute({id:2,fn:mfn(MODE.cberr,2),cb:mcb(MODE.ok,2)})
-    e1.execute({id:3,fn:mfn(MODE.ok,3),cb:mcb(MODE.throw,3)})
   })
 
 })

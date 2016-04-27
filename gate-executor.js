@@ -28,10 +28,6 @@ function GateExecutor( options ) {
     trace:   false,
     stubs:   {Date:{}},
 
-    error: function(err) {
-      self.emit('error',err)
-    },
-
     clear: function() {
       self.emit('clear')
     },
@@ -118,12 +114,7 @@ function GateExecutor( options ) {
 
           err = error(err,options.msg_codes.timeout,task)
 
-          try {
-            done(err,null)
-          }
-          catch(e) {
-            options.error(error(e,options.msg_codes.callback,task))
-          }
+          done(err,null)
 
           check_clear()
         }, timeout)
@@ -131,54 +122,31 @@ function GateExecutor( options ) {
 
       task.time = {start:now()}
 
-      try {
-        var task_start = Date.now()
-        task.fn(function(err,out){
-          var args = Array.prototype.slice.call(arguments)
+      var task_start = Date.now()
+      task.fn(function(err,out){
+        var args = Array.prototype.slice.call(arguments)
 
-          completed = true
-          if( timedout ) return
+        completed = true
+        if( timedout ) return
 
-          tr('done',gated,inflight,task.id,task.desc,Date.now()-task_start)
-          task.time.end = now()
+        tr('done',gated,inflight,task.id,task.desc,Date.now()-task_start)
+        task.time.end = now()
 
-          if( toref ) {
-            clear_timeout(toref)
-          }
-
-          if( err ) {
-            args[0] = error(err,options.msg_codes.error,task)
-            args[1] = args[1] || null
-          }
-
-          if( done ) {
-            try {
-              done.apply(null,args)
-            }
-            catch(e) {
-              options.error(error(e,options.msg_codes.callback,task))
-            }
-          }
-
-          check_clear()
-        })
-      }
-      catch(e) {
         if( toref ) {
           clear_timeout(toref)
         }
 
-        var et = error(e,options.msg_codes.execute,task)
-        try {
-          done(et,null)
+        if( err ) {
+          args[0] = error(err,options.msg_codes.error,task)
+          args[1] = args[1] || null
         }
-        catch(e) {
-          options.error(et)
-          options.error(error(e,options.msg_codes.abandoned,task))
+
+        if( done ) {
+          done.apply(null,args)
         }
 
         check_clear()
-      }
+      })
     })
   }
 
