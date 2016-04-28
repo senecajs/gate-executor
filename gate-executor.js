@@ -77,76 +77,70 @@ function GateExecutor( options ) {
     }
   }
 
+  function check_clear() {
+    inflight--
+
+    if( self.clear() ) {
+      tr('clear',gated,inflight)
+      options.clear()
+    }
+  }
 
   function work( task, done ) {
     tr('work',gated,inflight,task.id,task.desc)
 
-    function check_clear() {
-      inflight--
+    var completed = false
+    var timedout  = false
+    var timeout = (typeof task.timeout === 'number') ? task.timeout : options.timeout
 
-      //console.log(inflight, waiters.length, q.length())
-      //if( 0 == inflight && 0 === waiters.length && 0 === q.length() ) {
-      if( self.clear() ) {
-        tr('clear',gated,inflight)
-        options.clear()
-      }
-    }
+    if( done ) {
+      var toref = set_timeout(function(){
+        timedout = true
+        if( completed ) return;
 
-    setImmediate( function(){
-      var completed = false
-      var timedout  = false
-      var timeout = (typeof task.timeout === 'number') ? task.timeout : options.timeout
-
-      if( done ) {
-        var toref = set_timeout(function(){
-          timedout = true
-          if( completed ) return;
-
-          tr('timeout',gated,inflight,task.id,task.desc)
-          task.time.end = now()
-
-          var err = new Error(
-            '[TIMEOUT:'+task.id+':'+
-              timeout+'<'+task.time.end+'-'+task.time.start+':'+
-              task.desc+']')
-
-          err.timeout = true
-
-          err = error(err,options.msg_codes.timeout,task)
-
-          done(err,null)
-
-          check_clear()
-        }, timeout)
-      }
-
-      task.time = {start:now()}
-
-      var task_start = Date.now()
-      task.fn(function(err,out){
-        var args = Array.prototype.slice.call(arguments)
-
-        completed = true
-        if( timedout ) return
-
-        tr('done',gated,inflight,task.id,task.desc,Date.now()-task_start)
+        tr('timeout',gated,inflight,task.id,task.desc)
         task.time.end = now()
 
-        if( toref ) {
-          clear_timeout(toref)
-        }
+        var err = new Error(
+          '[TIMEOUT:'+task.id+':'+
+            timeout+'<'+task.time.end+'-'+task.time.start+':'+
+            task.desc+']')
 
-        if( err ) {
-          args[0] = error(err,options.msg_codes.error,task)
-          args[1] = args[1] || null
-        }
+        err.timeout = true
 
-        if( done ) {
-          done.apply(null,args)
-        }
+        err = error(err,options.msg_codes.timeout,task)
+
+        done(err,null)
 
         check_clear()
-      })
+      }, timeout)
+    }
+
+    task.time = {start:now()}
+
+    var task_start = Date.now()
+    task.fn(function(err,out){
+      var args = _.toArray(arguments)
+
+      completed = true
+      if( timedout ) return
+
+      tr('done',gated,inflight,task.id,task.desc,Date.now()-task_start)
+      task.time.end = now()
+
+      if( toref ) {
+        clear_timeout(toref)
+      }
+
+      if( err ) {
+        args[0] = error(err,options.msg_codes.error,task)
+      }
+
+      if( done ) {
+        done.apply(null,args)
+      }
+
+      check_clear()
     })
   }
 

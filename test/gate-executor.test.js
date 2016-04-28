@@ -153,7 +153,7 @@ describe('executor', function(){
     timerstub.wait(40,function(){
       //console.log('SEQ '+seq)
 
-      expect(seq).to.equal('abcde')
+      expect(seq).to.equal('abced')
       done()
     })
   })
@@ -336,11 +336,10 @@ describe('executor', function(){
       log.push('c'+cI)
       //console.log(cI, e1.tracelog)
 
-      if( 4 === cI ) {
-        //console.log(log)
+      if( 5 === cI ) {
 
         expect(log).to.deep.equal(
-          [ 0, 1, 'c1', 2, 3, 'c2', 4, 6, 5, 'c3', 9, 7, 10, 8, 'c4' ]
+          [ 0, 'c1', 1, 'c2', 2, 3, 'c3', 4, 6, 5, 'c4', 9, 7, 10, 8, 'c5' ]
         )
 
         fin()
@@ -418,15 +417,16 @@ describe('executor', function(){
       //console.log(cI, e1.tracelog)
       //console.log(log)
 
-      if( 1 === cI ) {
+      if( 2 === cI ) {
         //console.log(log)
 
         expect(log).to.deep.equal(
           [ 0,
             'c0~null~0',
+            'c1',
             2,
             'c2~gate-executor: BBB~2',
-            'c1'
+            'c2'
           ]
         )
         fin()
