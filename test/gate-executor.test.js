@@ -153,7 +153,7 @@ describe('executor', function(){
     timerstub.wait(40,function(){
       //console.log('SEQ '+seq)
 
-      expect(seq).to.equal('abcde')
+      expect(seq).to.equal('abced')
       done()
     })
   })
@@ -336,11 +336,10 @@ describe('executor', function(){
       log.push('c'+cI)
       //console.log(cI, e1.tracelog)
 
-      if( 4 === cI ) {
-        //console.log(log)
+      if( 5 === cI ) {
 
         expect(log).to.deep.equal(
-          [ 0, 1, 'c1', 2, 3, 'c2', 4, 6, 5, 'c3', 9, 7, 10, 8, 'c4' ]
+          [ 0, 'c1', 1, 'c2', 2, 3, 'c3', 4, 6, 5, 'c4', 9, 7, 10, 8, 'c5' ]
         )
 
         fin()
@@ -384,27 +383,16 @@ describe('executor', function(){
       stubs:timerstub
     })
 
-
     var log = []
-
-    e1.on('error',function(err) {
-      log.push('EE~'+err.message)
-    })
-
 
     var MODE = {
       ok:0,
-      throw:1,
       cberr:2
     }
 
     function mfn (mode,id,t) {
       return function(done) {
         log.push(id)
-
-        if( MODE.throw === mode ) {
-          throw new Error('AAA')
-        }
 
         var err = MODE.cberr === mode ? new Error('BBB') : null
 
@@ -419,8 +407,6 @@ describe('executor', function(){
       return function(err,out) {
         //console.log('c',id,err,out)
         log.push('c'+id+'~'+(err&&err.message)+'~'+out)
-
-        if( MODE.throw === mode ) throw new Error('CCC')
       }
     }
 
@@ -431,20 +417,17 @@ describe('executor', function(){
       //console.log(cI, e1.tracelog)
       //console.log(log)
 
-      if( 1 === cI ) {
+      if( 2 === cI ) {
         //console.log(log)
 
         expect(log).to.deep.equal(
           [ 0,
             'c0~null~0',
-            1,
-            'c1~gate-executor: AAA~null',
+            'c1',
             2,
             'c2~gate-executor: BBB~2',
-            3,
-            'c3~null~3',
-            'EE~gate-executor: CCC',
-            'c1' ]
+            'c2'
+          ]
         )
         fin()
       }
@@ -452,9 +435,7 @@ describe('executor', function(){
 
     // seq: 0,1
     e1.execute({id:0,fn:mfn(MODE.ok,0),cb:mcb(MODE.ok,0)})
-    e1.execute({id:1,fn:mfn(MODE.throw,1),cb:mcb(MODE.ok,1)})
     e1.execute({id:2,fn:mfn(MODE.cberr,2),cb:mcb(MODE.ok,2)})
-    e1.execute({id:3,fn:mfn(MODE.ok,3),cb:mcb(MODE.throw,3)})
   })
 
 })
