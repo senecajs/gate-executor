@@ -147,6 +147,9 @@ function GateExecutor( options ) {
           }
 
           if( err ) {
+            if (!(err instanceof Error)) {
+              err = new Error(err);
+            }
             args[0] = error(err,options.msg_codes.error,task)
             args[1] = args[1] || null
           }
