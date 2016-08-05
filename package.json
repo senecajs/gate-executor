@@ -13,22 +13,21 @@
     "url": "https://github.com/rjrodger/gate-executor.git"
   },
   "keywords": [
+    "seneca",
     "gate",
     "executor"
   ],
   "author": "Richard Rodger (http://richardrodger.com)",
   "contributors": [
-    "Jacob Pruitt (http://javascriptjake.com)"
+    "Jacob Pruitt (http://javascriptjake.com)",
+    "Wyatt Preul (http://jsgeek.com)"
   ],
   "license": "MIT",
   "bugs": {
-    "url": "https://github.com/rjrodger/gate-executor/issues"
+    "url": "https://github.com/senecajs/gate-executor/issues"
   },
-  "homepage": "https://github.com/rjrodger/gate-executor",
+  "homepage": "https://github.com/senecajs/gate-executor",
   "dependencies": {
-    "async": "1.5.2",
-    "eraro": "0.4.1",
-    "lodash": "4.0.0"
   },
   "devDependencies": {
     "code": "1.5.0",
