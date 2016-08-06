@@ -53,27 +53,100 @@ describe('gate-executor', function(){
   })
 
 
+  it('running', function(done) {
+    var log = []
+
+    var ge = GateExecutor()
+
+    ge.add({fn: function aa (d) {log.push('aa'); d()}})
+    ge.add({fn: function bb (d) {log.push('bb'); d()}})
+
+    var cc = 0
+    ge.clear(function () {
+      ++cc
+      if (1 === cc) {
+        expect(log).to.deep.equal(['aa', 'bb'])
+      }
+      else if (2 === cc) {
+        expect(log).to.deep.equal(['aa', 'bb', 'cc'])
+        done()
+      }
+    })
+
+    ge.start(function () {
+      expect(log).to.deep.equal(['aa', 'bb'])
+    })
+
+    setImmediate(function () {
+      ge.add({fn: function cc (d) {log.push('cc'); d()}})
+    })
+  })
+
+
+  it('timeout', function(done) {
+    var log = []
+
+    var ge = GateExecutor({timeout: 200, interval:11})
+
+    ge.add({
+      fn: function aa (d) {
+        log.push('s-aa');
+        setTimeout(function () {log.push('e-aa'); d()},100)
+      }
+    })
+
+    ge.add({
+      fn: function bb (d) {
+        log.push('s-bb');
+        setTimeout(function () {log.push('e-bb'); d()},300)
+      }
+    })
+
+    ge.add({
+      fn: function cc (d) {
+        log.push('s-cc');
+        setTimeout(function () {log.push('e-cc'); d()},150)
+      }
+    })
+
+    ge.add({
+      tm: 50,
+      ontm: function () {
+        log.push('t-dd');
+      },
+      fn: function dd (d) {
+        log.push('s-dd');
+        setTimeout(function () {log.push('e-dd'); d()},150)
+      }
+    })
+
+    ge.clear(function () {
+      //console.log(log)
+      expect(log).to.deep.equal(
+        [ 's-aa', 's-bb', 's-cc', 's-dd', 't-dd', 'e-aa', 'e-cc', 'e-dd' ])      
+      done()
+    })
+
+    ge.start()
+
+    setTimeout(function () {
+      //console.log(ge.state())
+      expect(ge.state()).to.deep.equal([ { s: 'a', ge: 1, fnn: 'bb', wid: 2 } ])
+    },200)
+  })
+
+
   it('traverse', function(done) {
 
-    /*
-    var p = [
-      {type:'add', ge:0},
-      {type:'gate', ge:0},
-      {type:'add', ge:1},
-    ]
-
-    console.log(build(p).ge.state())
-     */
-
-    console.log('START DESCEND')
+    // console.log('START DESCEND')
     var all = descend([], 1, 0)
-    for (var i = 0; i < all.length; ++i) {
+    // for (var i = 0; i < all.length; ++i) {
       //console.log(i,all[i])
-    }
-    console.log('END DESCEND')
+    // }
+    // console.log('END DESCEND')
 
 
-    console.log('START BUILD')
+    // console.log('START BUILD')
     var ge_all = []
     for (var i = 0; i < all.length; ++i) {
       var b = build(all[i])
@@ -81,9 +154,9 @@ describe('gate-executor', function(){
       b.i = i
       ge_all[i] = b
     }
-    console.log('END BUILD')
+    // console.log('END BUILD')
 
-    console.log('START RUN')
+    // console.log('START RUN')
     var log_all = []
     var j = 0
     ge_all.forEach(function (b) {
@@ -100,7 +173,7 @@ describe('gate-executor', function(){
       for (var i = 0; i < all.length; ++i) {
         //console.log(i,log_all[i])
       }
-      console.log('END RUN')
+      // console.log('END RUN')
 
       //console.log(Util.inspect(log_all,{depth:null}))
 
