@@ -1,6 +1,8 @@
 /* Copyright (c) 2014-2016 Richard Rodger, MIT License */
 "use strict";
 
+// FIX: gates should not timeout as subactions need time
+
 
 function make_GateExecutor (options) {
   options = options || {}
@@ -29,7 +31,8 @@ function GateExecutor (options, gec) {
     gate: false,
     running: false,
     clear: null,
-    firstclear: null
+    firstclear: null,
+    tm_in: null
   }
 
   function process (whence) {
@@ -48,7 +51,8 @@ function GateExecutor (options, gec) {
         p.m[work.id] = work
         p.s.push(work)
         s.gate = work.gate
-        // console.log(s.pc,'W',whence,self.state())
+
+        // console.log('GE',self.id,s.pc,'W',whence,self.state())
 
         work.fn(function () {
           p.m[work.id].done = true
@@ -56,13 +60,16 @@ function GateExecutor (options, gec) {
           while (p.s[0] && p.s[0].done) {
             p.s.shift()
           }
-          // console.log(s.pc,'D',whence,self.state())
+          // console.log('GE',self.id,s.pc,'D',whence,self.state())
 
           if (work.gate) {
             s.gate = false
           }
 
           if (0 === q.length && 0 === p.s.length) {
+            clearInterval(s.tm_in)
+            s.tm_in = null
+
             if (s.firstclear) {
               var fc = s.firstclear
               s.firstclear = null
@@ -91,14 +98,15 @@ function GateExecutor (options, gec) {
 
   function timeout (work) {
     work.fin = false
-    work.fnn = work.fn.name
     work.ofn = work.fn
-    var tfn = function (done) {
-      work.callback = done
+
+    var tfn = function (callback) {
+      work.callback = callback
       work.start = Date.now()
       inflight.push(work)
       work.ofn(function () {
-        // console.log(work.fnn,'D',work.fin)
+        // console.log('GE',work.description,'D',work.fin)
+
         if (work.fin) return
         work.fin = true
         work.callback()
@@ -107,14 +115,15 @@ function GateExecutor (options, gec) {
     return tfn
   }
 
-  setInterval(function () {
+  function timeout_check () {
     var now = Date.now()
     // console.log('I',now,inflight)
     for (var i = 0; i < inflight.length; ++i) {
       var work = inflight[i]
-      // console.log(work.fnn,'T',work.tm < now - work.start,work.fin)
+      // console.log('GE',self.id,work.id,work.description,'T',work.tm < now - work.start,work.fin)
+
       if (work.tm < now - work.start && !work.fin) {
-        //console.log(work.fnn,'TT',work.tm < now - work.start,work.fin)
+        //console.log('GE',self.id,work.id,work.description,'TT',work.tm < now - work.start,work.fin)
         work.fin = true
         work.callback()
 
@@ -125,38 +134,65 @@ function GateExecutor (options, gec) {
     }
     while (inflight[0] && inflight[0].fin) {
       var work = inflight.shift()
-      // console.log(work.fnn,'C',work.fin)
+      // console.log(work.description,'C',work.fin)
     }
-  }, options.interval)
+  }
 
   self.start = function (firstclear) {
     setImmediate(function () {
       s.running = true
-      s.firstclear = firstclear
+
+      if (firstclear) {
+        s.firstclear = firstclear
+      }
+
+      if (!s.tm_in) {
+        s.tm_in = setInterval(timeout_check, options.interval)
+      }
+
       process('start')
     })
+    return self
   }
 
+  // TODO: test
+  self.pause = function () {
+    s.running = false
+  }
+  
   self.clear = function (done) {
     s.clear = done
+    return self
+  }
+
+  self.isclear = function () {
+    return (0 === q.length && 0 === p.s.length)
   }
 
   self.add = function (work) {
     s.idc += 1
-    work.id = s.idc
+    work.id = work.id || s.idc
     work.ge = self.id
     work.tm = null == work.tm ? options.timeout : work.tm
+    work.description = work.description || work.fn.name || ''+Date.now()
+
     work.fn = timeout(work)
-    //console.log(work)
+    // console.log(work)
 
     q.push(work)
-    // console.log(s.pc,'A',self.state())
+    // console.log(s.pc,'A',work.description,self.id,self.state())
     
     if (s.running) {
+      if (!s.tm_in) {
+        s.tm_in = setInterval(timeout_check, options.interval)
+      }
+
       setImmediate(function () {
         process('add:'+work.id)
       })
     }
+
+    return self
   }
 
   self.gate = function () {
@@ -175,7 +211,7 @@ function GateExecutor (options, gec) {
     for (var i = 0; i < p.s.length; ++i) {
       var qe = p.s[i]
       if (!qe.done) {
-        o.push({s:'a', ge: qe.ge, fnn:qe.fnn, wid:qe.id})
+        o.push({s:'a', ge: qe.ge, d:qe.description, wid:qe.id})
       }
     }
     for (var i = 0; i < q.length; ++i) {
@@ -184,13 +220,11 @@ function GateExecutor (options, gec) {
         o.push(qe.gate.state())
       }
       else {
-        o.push({s:'w', ge: qe.ge, fnn:qe.fnn, wid:qe.id})
+        o.push({s:'w', ge: qe.ge, d:qe.description, wid:qe.id})
       }
     }
     return o
   }
 }
-
-
 
 module.exports = make_GateExecutor

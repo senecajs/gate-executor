@@ -32,16 +32,16 @@ describe('gate-executor', function(){
     ge2.add({fn: function ddd (d) {log.push('ddd'); d()}})
 
     expect(ge.state()).to.deep.equal([ 
-      { s: 'w', ge: 1, fnn: 'aa', wid: 1 },
-      { s: 'w', ge: 1, fnn: 'bb', wid: 2 },
-      [ { s: 'w', ge: 2, fnn: 'ccc', wid: 1 },
-        { s: 'w', ge: 2, fnn: 'ddd', wid: 2 } ],
-      { s: 'w', ge: 1, fnn: 'dd', wid: 4 } ])
+      { s: 'w', ge: 1, d: 'aa', wid: 1 },
+      { s: 'w', ge: 1, d: 'bb', wid: 2 },
+      [ { s: 'w', ge: 2, d: 'ccc', wid: 1 },
+        { s: 'w', ge: 2, d: 'ddd', wid: 2 } ],
+      { s: 'w', ge: 1, d: 'dd', wid: 4 } ])
 
     ge2.clear(function () {
       expect(log).to.deep.equal(['aa', 'bb', 'ccc', 'ddd'])      
       expect(ge.state()).to.deep.equal([
-        { s: 'w', ge: 1, fnn: 'dd', wid: 4 } ])
+        { s: 'w', ge: 1, d: 'dd', wid: 4 } ])
     })
 
     ge.clear(function () {
@@ -121,7 +121,7 @@ describe('gate-executor', function(){
     })
 
     ge.clear(function () {
-      //console.log(log)
+      // console.log(log)
       expect(log).to.deep.equal(
         [ 's-aa', 's-bb', 's-cc', 's-dd', 't-dd', 'e-aa', 'e-cc', 'e-dd' ])      
       done()
@@ -131,7 +131,7 @@ describe('gate-executor', function(){
 
     setTimeout(function () {
       //console.log(ge.state())
-      expect(ge.state()).to.deep.equal([ { s: 'a', ge: 1, fnn: 'bb', wid: 2 } ])
+      expect(ge.state()).to.deep.equal([ { s: 'a', ge: 1, d: 'bb', wid: 2 } ])
     },200)
   })
 
