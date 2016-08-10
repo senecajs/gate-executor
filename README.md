@@ -19,7 +19,8 @@ Gating operates to any depth, allowing you to form a tree-structured
 queue that must complete breadth-first.
 
 The queue also handles timeouts, so that failing work items do not
-block processing.
+block processing. Timeouts use a shared `setInterval`, so are nice and
+efficient.
 
 Used by the [Seneca](http://senecajs.org/) microservice framework to
 implement plugin initialisation.
@@ -69,7 +70,7 @@ ge.start(function () {
 //   done
 ```
 
-For detailed information, and API descripitions, see the
+For detailed information, and API descriptions, see the
 [Annotated Source](http://rjrodger.github.io/gate-executor/doc/gate-executor.html)
 
 # Support
