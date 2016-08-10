@@ -1,78 +1,141 @@
 /* Copyright (c) 2014-2016 Richard Rodger, MIT License */
-"use strict";
-
-// FIX: gates should not timeout as subactions need time
+'use strict'
 
 
+// Core modules.
+var Assert = require('assert')
+
+
+// Create root instance. Exported as module.
+//   * `options` (object): instance options as key-value pairs.
+//
+// The options are:
+//   * `interval` (integer): millisecond interval for timeout checks. Default: 111.
+//   * `timeout` (integer): common millisecond timeout.
+//      Can be overridden by work item options. Default: 2222.
 function make_GateExecutor (options) {
   options = options || {}
   options.interval = null == options.interval ? 111 : options.interval
   options.timeout = null == options.timeout ? 2222 : options.timeout
 
-  var ge = new GateExecutor(options, 0)
-  return ge
+  Assert.ok('object' === typeof options)
+  Assert.ok('number' === typeof options.interval)
+  Assert.ok('number' === typeof options.timeout)
+  Assert.ok(0 < options.interval)
+  Assert.ok(0 < options.timeout)
+
+  return new GateExecutor(options, 0)
 }
 
-
-function GateExecutor (options, gec) {
+// Create a new instance.
+//   * `options` (object): instance options as key-value pairs.
+//   * `instance_counter` (integer): count number of instances created;
+//     used as identifier.
+function GateExecutor (options, instance_counter) {
   var self = this
-  self.id = ++gec
+  self.id = ++instance_counter
 
+  // Work queue.
   var q = []
 
-  var p = {
-    m: {},
-    s: []
+  // Work-in-progress set.
+  var progress = {
+
+    // Lookup work by id.
+    lookup: {},
+
+    // Work history - a list of work items in the order executed.
+    history: []
   }
 
+  // Internal state.
   var s = {
-    pc: 10000000 * self.id,
-    idc: 0,
+
+    // Count of work items added to this instance. Used as generated work identifier.
+    work_counter: 0,
+
+    // When `true`, the instance is in a gated state, and work cannot proceed
+    // until the gated in-progress work item is completed.
     gate: false,
+
+    // When `true`, the instance processes work items as they arrive.
+    // When `false`, no processing happens, and the instance must be started by
+    // calling the `start` method.
     running: false,
+
+    // A function called when the work queue and work-in-progress set
+    // are empty.  Set by calling the `clear` method. Will be called
+    // each time the instance empty.
     clear: null,
+
+    // A function called once only when the work queue and
+    // work-in-progress set are first emptied after each start. Set as
+    // an optional argument to the `start` method.
     firstclear: null,
+
+    // Timeout interval reference value returned by `setInterval`.
+    // Timeouts are not checked using `setTimeout`, as it is more
+    // efficient, and more than sufficient, to check timeouts periodically.
     tm_in: null
   }
 
-  function process (whence) {
-    s.pc += 1
+  // Process the next work item.
+  function process () {
 
+    // If not running, don't process any work items.
     if (!s.running) {
       return
     }
 
-    function next() {
+    // Process the next work item, returning `true` if there was one.
+    function next () {
       var res = false
       var work
 
-      if (!s.gate) { 
-        // console.log(s.pc,'Q',whence,self.state())
+      // Remove next work item from the front of the work queue.
+      if (!s.gate) {
         work = q.shift()
       }
 
       if (work) {
-        p.m[work.id] = work
-        p.s.push(work)
+
+        // Add work item to the work-in-progress set.
+        progress.lookup[work.id] = work
+        progress.history.push(work)
+
+        // If work item is a gate, set the state of the instance as
+        // gated.  This work item will need to complete before later
+        // work items in the queue can be processed.
         s.gate = work.gate
 
-        // console.log('GE',self.id,s.pc,'W',whence,self.state())
-
+        // Call the work item function (which does the real work),
+        // passing a callback. This callback has no arguments
+        // (including no error!).  It is called only to indicate
+        // completion of the work item.  Work items must handle their
+        // own errors and results.
         work.fn(function () {
-          p.m[work.id].done = true
-          delete p.m[work.id]
-          while (p.s[0] && p.s[0].done) {
-            p.s.shift()
-          }
-          // console.log('GE',self.id,s.pc,'D',whence,self.state())
 
+          // Remove the work item from the work-in-progress set.  As
+          // work items may complete out of order, prune the history
+          // from the front until the first incomplete work
+          // item. Later complete work items will eventually be
+          // reached on another processing round.
+          progress.lookup[work.id].done = true
+          delete progress.lookup[work.id]
+          while (progress.history[0] && progress.history[0].done) {
+            progress.history.shift()
+          }
+
+          // If the work item was a gate, it is now complete, and the
+          // instance can be ungated, allowing later work items in the
+          // queue to be processed.
           if (work.gate) {
             s.gate = false
           }
 
-          if (0 === q.length && 0 === p.s.length) {
-            //console.log('GE',self.id,'CLEAR')
-
+          // If work queue and work-in-progress set are empty, then
+          // call the registered clear functions.
+          if (0 === q.length && 0 === progress.history.length) {
             clearInterval(s.tm_in)
             s.tm_in = null
 
@@ -81,13 +144,15 @@ function GateExecutor (options, gec) {
               s.firstclear = null
               fc()
             }
+
             if (s.clear) {
               s.clear()
             }
           }
 
+          // Process each work item on next tick to avoid lockups.
           setImmediate(function () {
-            process('fn-done:'+work.id)
+            process()
           })
         })
 
@@ -96,41 +161,54 @@ function GateExecutor (options, gec) {
       return res
     }
 
+    // Keep processing work items until none are left or a gate is reached.
     while (next()) {}
   }
 
 
-  var inflight = []
+  // List of work items to check for timeouts.
+  var timeout_checklist = []
 
+
+  // Wrapper function to construct the timeout check.
   function timeout (work) {
-    work.fin = false
-    work.ofn = work.fn
+    work.finished = false
+    work.orig_fn = work.fn
 
-    var tfn = function (callback) {
+    var timeout_fn = function (callback) {
       work.callback = callback
       work.start = Date.now()
-      inflight.push(work)
-      work.ofn(function () {
-        // console.log('GE',work.description,'D',work.fin)
+      timeout_checklist.push(work)
 
-        if (work.fin) return
-        work.fin = true
+      work.orig_fn(function () {
+        // Absorb multiple callbacks.
+        if (work.finished) {
+          return
+        }
+        work.finished = true
         work.callback()
       })
     }
-    return tfn
+
+    return timeout_fn
   }
 
+  // To be run peridically via setInterval. For timed out work items,
+  // calls the done callback to allow work queue to proceed, and makes
+  // the work item as finished. Work items can receive notification of
+  // timeouts by providing an `on_timeout` callback property in the
+  // work definition object. Work items must handle timeout errors
+  // themselves, gate-executor cares only for the fact that a timeout
+  // happened, so it can continue processing.
   function timeout_check () {
     var now = Date.now()
-    // console.log('I',now,inflight)
-    for (var i = 0; i < inflight.length; ++i) {
-      var work = inflight[i]
-      // console.log('GE',self.id,work.id,work.description,'T',work.tm < now - work.start,work.fin)
+    var work = null
 
-      if (!work.gate && !work.fin && work.tm < now - work.start) {
-        //console.log('GE',self.id,work.id,work.description,'TT',work.tm < now - work.start,work.fin)
-        work.fin = true
+    for (var i = 0; i < timeout_checklist.length; ++i) {
+      work = timeout_checklist[i]
+
+      if (!work.gate && !work.finished && work.tm < now - work.start) {
+        work.finished = true
         work.callback()
 
         if (work.ontm) {
@@ -138,13 +216,19 @@ function GateExecutor (options, gec) {
         }
       }
     }
-    while (inflight[0] && inflight[0].fin) {
-      var work = inflight.shift()
-      // console.log(work.description,'C',work.fin)
+
+    while (timeout_checklist[0] && timeout_checklist[0].finished) {
+      work = timeout_checklist.shift()
     }
   }
 
+  // Start processing work items. Must be called to start processing.
+  // Can be called at anytime, interspersed with calls to other
+  // methods, including `add`. Takes a function as argument, which is
+  // called only once on the next time the queues are clear.
   self.start = function (firstclear) {
+
+    // Allow API chaining by not starting in current execution path.
     setImmediate(function () {
       s.running = true
 
@@ -152,49 +236,44 @@ function GateExecutor (options, gec) {
         s.firstclear = firstclear
       }
 
+      // The timeout interval check is stopped and started only as needed.
       if (!s.tm_in) {
         s.tm_in = setInterval(timeout_check, options.interval)
       }
 
-      process('start')
+      process()
     })
+
     return self
   }
 
-  // TODO: test
   self.pause = function () {
     s.running = false
   }
-  
+
   self.clear = function (done) {
     s.clear = done
     return self
   }
 
   self.isclear = function () {
-    return (0 === q.length && 0 === p.s.length)
+    return (0 === q.length && 0 === progress.history.length)
   }
 
   self.add = function (work) {
-    s.idc += 1
-    work.id = work.id || s.idc
+    s.work_counter += 1
+    work.id = work.id || s.work_counter
     work.ge = self.id
     work.tm = null == work.tm ? options.timeout : work.tm
-    work.description = work.description || work.fn.name || ''+Date.now()
+    work.description = work.description || work.fn.name || '' + Date.now()
 
     work.fn = timeout(work)
-    // console.log(work)
 
     q.push(work)
-    // console.log(s.pc,'A',work.description,self.id,self.state())
-    
-    if (s.running) {
-      //if (!s.tm_in) {
-      //  s.tm_in = setInterval(timeout_check, options.interval)
-      //}
 
+    if (s.running) {
       setImmediate(function () {
-        process('add:'+work.id)
+        process()
       })
     }
 
@@ -202,31 +281,33 @@ function GateExecutor (options, gec) {
   }
 
   self.gate = function () {
-    var ge = new GateExecutor(options, self.id)
+    var ge = new GateExecutor(options, instance_counter)
     var fn = function gate (done) {
       ge.start(done)
     }
 
-    self.add({gate:ge, fn:fn})
+    self.add({gate: ge, fn: fn})
 
     return ge
   }
 
   self.state = function () {
     var o = []
-    for (var i = 0; i < p.s.length; ++i) {
-      var qe = p.s[i]
-      if (!qe.done) {
-        o.push({s:'a', ge: qe.ge, d:qe.description, wid:qe.id})
+
+    for (var hI = 0; hI < progress.history.length; ++hI) {
+      var pe = progress.history[hI]
+      if (!pe.done) {
+        o.push({s: 'a', ge: pe.ge, d: pe.description, wid: pe.id})
       }
     }
-    for (var i = 0; i < q.length; ++i) {
-      var qe = q[i]
+
+    for (var qI = 0; qI < q.length; ++qI) {
+      var qe = q[qI]
       if (qe.gate) {
         o.push(qe.gate.state())
       }
       else {
-        o.push({s:'w', ge: qe.ge, d:qe.description, wid:qe.id})
+        o.push({s: 'w', ge: qe.ge, d: qe.description, wid: qe.id})
       }
     }
     return o

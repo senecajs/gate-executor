@@ -1,4 +1,4 @@
-module.exports = 
+module.exports =
 [ [ 'a_p_0_g_0' ],
   [ 'a_p_0_g_0', 'a_p_1_g_0' ],
   [ 'a_p_0_g_0', 'a_p_1_g_0', 'a_p_2_g_0' ],
