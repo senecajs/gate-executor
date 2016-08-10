@@ -6,68 +6,76 @@
 [![Dependency Status][david-badge]][david-url]
 [![Gitter chat][gitter-badge]][gitter-url]
 
-#### Execute functions that return via callback in order, but pause if a function is marked as a gate.
+#### A work queue that can be gated, stopping to wait for sub-queues to complete.
 
 [Annotated Source](http://rjrodger.github.io/gate-executor/doc/gate-executor.html)
 
-A work execution queue that provides tracing and gating. Work
-functions can have optional callbacks. Timeouts are triggered when
-execution does not complete within a specified time.
+A work execution queue that provides gating. Work items submitted to
+the queue are called in order, and execute concurrently. However, if
+the queue is *gated*, then a sub-queue is created, and work items
+added to the sub-queue must complete first.
 
-Gating places execution into a serial mode, where all gated work
-functions must complete in order before other work functions in the
-queue are called. The gate can be ignored.
+Gating operates to any depth, allowing you to form a tree-structured
+queue that must complete breadth-first.
 
-Used by [Seneca](http://senecajs.org/) micro-service communication to
-execute tasks in order. If you haven't heard about Seneca, check out
-the [getting started guide](http://senecajs.org/getting-started.html).
+The queue also handles timeouts, so that failing work items do not
+block processing.
 
+Used by the [Seneca](http://senecajs.org/) microservice framework to
+implement plugin initialisation.
+
+# Usage
+
+
+```js
+var GateExecutor = require('gate-executor')
+
+var ge = GateExecutor()
+
+ge.add({
+  fn: function first (done) {
+    console.log('first')
+    done()
+  }
+})
+
+// create a gate
+var subge = ge.gate()
+
+ge.add({
+  fn: function second (done) {
+    console.log('second')
+    done()
+  }
+})
+
+// this needs to complete before 'second' can run
+subge.add({
+  fn: function second (done) {
+    console.log('third')
+    done()
+  }
+})
+
+ge.start(function () {
+  console.log('done')
+  done()
+})
+
+// prints:
+//   first
+//   third
+//   second
+//   done
+```
+
+For detailed information, and API descripitions, see the
+[Annotated Source](http://rjrodger.github.io/gate-executor/doc/gate-executor.html)
 
 # Support
 
 If you're using this module, feel free to contact me on twitter if you
 have any questions! :) [@rjrodger](http://twitter.com/rjrodger)
-
-# Usage
-
-The gate executor provides functionality to pause gated tasks and to
-quit tasks that exceed a given timeout. The executor can be created
-with a few options:
-
-```JavaScript
-var e0 = executor({
-  trace: true,              // Error logging trace, default false
-  timeout: 150,             // Timout for tasks, default 33333
-  error: function() {...},  // A function to wrap all errors in, default noop
-  stubs: {		    // Stubs to substitute default node functions
-    now: {...},
-    setTimeout: {...},
-    clearTimeout: {...}
-  }
-})
-```
-
-When calling the executor with a task, use the following pattern:
-```JavaScript
-e0.execute({
-  id: 'a',              // Optional identifier for trace
-  fn: function() {...}  // Function to be preformed
-  cb: function(err, out) {...}
-})
-```
-
-# Worker definition
-
-The worker definition object has the following properties:
-
-   * _id_:     an identifier string for the worker.
-   * _desc_:   a description string for the worker.
-   * _fn_:     the worker function itself; it should accept one argument, a completion callback, which must be called (this in turn then calls the task callback, if any).
-   * _cb_:     optional callback function, of the form: function(err,result) { ... }.
-   * _gate_:   this worker is a gate; all subsequent workers will wait for this one to complete.
-   * _ungate_: this worker will ignore any gates that are active, and so will be executed regardless.
-   * _timeout_: override the executor timeout for this individual work
-
 
 # Testing
 

@@ -13,6 +13,44 @@ var GateExecutor = require('..')
 
 
 describe('gate-executor', function () {
+  it('readme', function (done) {
+    var ge = GateExecutor()
+
+    ge.add({
+      fn: function first (done) {
+        console.log('first')
+        done()
+      }
+    })
+
+    var subge = ge.gate()
+
+    ge.add({
+      fn: function second (done) {
+        console.log('second')
+        done()
+      }
+    })
+
+    subge.add({
+      fn: function second (done) {
+        console.log('third')
+        done()
+      }
+    })
+
+    ge.start(function () {
+      console.log('done')
+      done()
+    })
+
+    // prints:
+    //   first
+    //   third
+    //   second
+    //   done
+  })
+
   it('happy', function (done) {
     var log = []
 
