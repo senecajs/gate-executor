@@ -1,215 +1,389 @@
-/* Copyright (c) 2014-2015 Richard Rodger, MIT License */
-/* jshint node:true, asi:true, eqnull:true */
-"use strict";
+/* Copyright (c) 2014-2016 Richard Rodger, MIT License */
+'use strict'
 
 
-var events = require('events')
-var util   = require('util')
-
-var _      = require('lodash')
-var async  = require('async')
-var error  = require('eraro')({package:'gate-executor'})
+// Core modules.
+var Assert = require('assert')
 
 
-util.inherits( GateExecutor, events.EventEmitter )
+// Create root instance. Exported as module.
+//   * `options` (object): instance options as key-value pairs.
+//
+// The options are:
+//   * `interval` (integer): millisecond interval for timeout checks. Default: 111.
+//   * `timeout` (integer): common millisecond timeout.
+//      Can be overridden by work item options. Default: 2222.
+function make_GateExecutor (options) {
+  options = options || {}
+  options.interval = null == options.interval ? 111 : options.interval
+  options.timeout = null == options.timeout ? 2222 : options.timeout
 
-// Create new GateExecutor
-// options:
-//    * _timeout_:   take timeout
-//    * _trace_:     true => built in tracing, function => custom tracing
-//    * _error_:     function for unexpected errors, default: emit: 'error'
-//    * _msg_codes_: custom tracing code names
-function GateExecutor( options ) {
+  Assert('object' === typeof options)
+  Assert('number' === typeof options.interval)
+  Assert('number' === typeof options.timeout)
+  Assert(0 < options.interval)
+  Assert(0 < options.timeout)
+
+  return new GateExecutor(options, 0)
+}
+
+// Create a new instance.
+//   * `options` (object): instance options as key-value pairs.
+//   * `instance_counter` (integer): count number of instances created;
+//     used as identifier.
+function GateExecutor (options, instance_counter) {
   var self = this
-  events.EventEmitter.call(self)
 
-  options = _.extend({
-    timeout: 33333,
-    trace:   false,
-    stubs:   {Date:{}},
+  Assert('object' === typeof options)
+  Assert('number' === typeof instance_counter)
 
-    error: function(err) {
-      self.emit('error',err)
-    },
+  self.id = ++instance_counter
 
-    clear: function() {
-      self.emit('clear')
-    },
-  },options)
+  // Work queue.
+  var q = []
 
-  options.msg_codes = _.extend({
-    msg_codes: {
-      timeout:   'task-timeout',
-      error:     'task-error',
-      callback:  'task-callback',
-      execute:   'task-execute',
-      abandoned: 'task-abandoned'
+  // Work-in-progress set.
+  var progress = {
+
+    // Lookup work by id.
+    lookup: {},
+
+    // Work history - a list of work items in the order executed.
+    history: []
+  }
+
+  // List of work items to check for timeouts.
+  var timeout_checklist = []
+
+  // Internal state.
+  var s = {
+
+    // Count of work items added to this instance. Used as generated work identifier.
+    work_counter: 0,
+
+    // When `true`, the instance is in a gated state, and work cannot proceed
+    // until the gated in-progress work item is completed.
+    gate: false,
+
+    // When `true`, the instance processes work items as they arrive.
+    // When `false`, no processing happens, and the instance must be started by
+    // calling the `start` method.
+    running: false,
+
+    // A function called when the work queue and work-in-progress set
+    // are empty.  Set by calling the `clear` method. Will be called
+    // each time the instance empty.
+    clear: null,
+
+    // A function called once only when the work queue and
+    // work-in-progress set are first emptied after each start. Set as
+    // an optional argument to the `start` method.
+    firstclear: null,
+
+    // Timeout interval reference value returned by `setInterval`.
+    // Timeouts are not checked using `setTimeout`, as it is more
+    // efficient, and more than sufficient, to check timeouts periodically.
+    tm_in: null
+  }
+
+  // Process the next work item.
+  function process () {
+
+    // If not running, don't process any work items.
+    if (!s.running) {
+      return
     }
-  },options.msg_codes)
 
+    // Process the next work item, returning `true` if there was one.
+    function next () {
+      var res = false
+      var work = null
 
-  var set_timeout   = options.stubs.setTimeout   || setTimeout
-  var clear_timeout = options.stubs.clearTimeout || clearTimeout
-  var now           = options.stubs.Date.now     || Date.now
+      // Remove next work item from the front of the work queue.
+      if (!s.gate) {
+        work = q.shift()
+      }
 
-  var q = async.queue(work,1)
+      if (work) {
+        Assert('object' === typeof work)
+        Assert('string' === typeof work.id)
+        Assert('function' === typeof work.fn)
 
-  var gated    = false
-  var waiters  = []
-  var inflight = 0
+        // Add work item to the work-in-progress set.
+        progress.lookup[work.id] = work
+        progress.history.push(work)
 
-  var runtrace = !!options.trace
-  self.tracelog = runtrace ? (_.isFunction(options.trace) ? null : []) : null
+        // If work item is a gate, set the state of the instance as
+        // gated.  This work item will need to complete before later
+        // work items in the queue can be processed.
+        s.gate = work.gate
 
-  var tr = !runtrace ? _.noop :
-        (_.isFunction(options.trace) ? options.trace : function() {
-          var args = Array.prototype.slice.call(arguments)
-          args.unshift(now())
-          self.tracelog.push( args )
+        // Call the work item function (which does the real work),
+        // passing a callback. This callback has no arguments
+        // (including no error!).  It is called only to indicate
+        // completion of the work item.  Work items must handle their
+        // own errors and results.
+        work.fn(function () {
+
+          // Remove the work item from the work-in-progress set.  As
+          // work items may complete out of order, prune the history
+          // from the front until the first incomplete work
+          // item. Later complete work items will eventually be
+          // reached on another processing round.
+          progress.lookup[work.id].done = true
+          delete progress.lookup[work.id]
+          while (progress.history[0] && progress.history[0].done) {
+            progress.history.shift()
+          }
+
+          // If the work item was a gate, it is now complete, and the
+          // instance can be ungated, allowing later work items in the
+          // queue to be processed.
+          if (work.gate) {
+            s.gate = false
+          }
+
+          // If work queue and work-in-progress set are empty, then
+          // call the registered clear functions.
+          if (0 === q.length && 0 === progress.history.length) {
+            clearInterval(s.tm_in)
+            s.tm_in = null
+
+            if (s.firstclear) {
+              var fc = s.firstclear
+              s.firstclear = null
+              fc()
+            }
+
+            if (s.clear) {
+              s.clear()
+            }
+          }
+
+          // Process each work item on next tick to avoid lockups.
+          setImmediate(function () {
+            process()
+          })
         })
 
+        res = true
+      }
+      return res
+    }
 
-  q.drain = function(){
-    /* jshint boss:true */
+    // Keep processing work items until none are left or a gate is reached.
+    while (next()) {}
+  }
 
-    tr('ungate',gated,inflight)
-    gated = false
 
-    var task = null
-    while( task = waiters.shift() ) {
-      work(task,task.cb)
+  // Wrapper function to construct the timeout check.
+  function timeout (work) {
+    Assert('object' === typeof work)
+    Assert('function' === typeof work.fn)
+
+    work.finished = false
+    work.orig_fn = work.fn
+
+    var timeout_fn = function (callback) {
+      Assert('function' === typeof callback)
+
+      work.callback = callback
+      work.start = Date.now()
+      timeout_checklist.push(work)
+
+      work.orig_fn(function () {
+        // Absorb multiple callbacks.
+        if (work.finished) {
+          return
+        }
+        work.finished = true
+        work.callback()
+      })
+    }
+
+    return timeout_fn
+  }
+
+
+  // To be run periodically via setInterval. For timed out work items,
+  // calls the done callback to allow work queue to proceed, and makes
+  // the work item as finished. Work items can receive notification of
+  // timeouts by providing an `on_timeout` callback property in the
+  // work definition object. Work items must handle timeout errors
+  // themselves, gate-executor cares only for the fact that a timeout
+  // happened, so it can continue processing.
+  function timeout_check () {
+    var now = Date.now()
+    var work = null
+
+    for (var i = 0; i < timeout_checklist.length; ++i) {
+      work = timeout_checklist[i]
+
+      if (!work.gate && !work.finished && work.tm < now - work.start) {
+        work.finished = true
+        work.callback()
+
+        if (work.ontm) {
+          work.ontm()
+        }
+      }
+    }
+
+    while (timeout_checklist[0] && timeout_checklist[0].finished) {
+      work = timeout_checklist.shift()
     }
   }
 
 
-  function work( task, done ) {
-    tr('work',gated,inflight,task.id,task.desc)
+  // Start processing work items. Must be called to start processing.
+  // Can be called at anytime, interspersed with calls to other
+  // methods, including `add`. Takes a function as argument, which is
+  // called only once on the next time the queues are clear.
+  self.start = function (firstclear) {
+    Assert(null == firstclear || 'function' === typeof firstclear)
 
-    function check_clear() {
-      inflight--
+    // Allow API chaining by not starting in current execution path.
+    setImmediate(function () {
+      s.running = true
 
-      //console.log(inflight, waiters.length, q.length())
-      //if( 0 == inflight && 0 === waiters.length && 0 === q.length() ) {
-      if( self.clear() ) {
-        tr('clear',gated,inflight)
-        options.clear()
-      }
-    }
-
-    setImmediate( function(){
-      var completed = false
-      var timedout  = false
-      var timeout = (typeof task.timeout === 'number') ? task.timeout : options.timeout
-
-      if( done ) {
-        var toref = set_timeout(function(){
-          timedout = true
-          if( completed ) return;
-
-          tr('timeout',gated,inflight,task.id,task.desc)
-          task.time.end = now()
-
-          var err = new Error(
-            '[TIMEOUT:'+task.id+':'+
-              timeout+'<'+task.time.end+'-'+task.time.start+':'+
-              task.desc+']')
-
-          err.timeout = true
-
-          err = error(err,options.msg_codes.timeout,task)
-
-          try {
-            done(err,null)
-          }
-          catch(e) {
-            options.error(error(e,options.msg_codes.callback,task))
-          }
-
-          check_clear()
-        }, timeout)
+      if (firstclear) {
+        s.firstclear = firstclear
       }
 
-      task.time = {start:now()}
-
-      try {
-        var task_start = Date.now()
-        task.fn(function(err,out){
-          var args = Array.prototype.slice.call(arguments)
-
-          completed = true
-          if( timedout ) return
-
-          tr('done',gated,inflight,task.id,task.desc,Date.now()-task_start)
-          task.time.end = now()
-
-          if( toref ) {
-            clear_timeout(toref)
-          }
-
-          if( err ) {
-            args[0] = error(err,options.msg_codes.error,task)
-            args[1] = args[1] || null
-          }
-
-          if( done ) {
-            try {
-              done.apply(null,args)
-            }
-            catch(e) {
-              options.error(error(e,options.msg_codes.callback,task))
-            }
-          }
-
-          check_clear()
-        })
+      // The timeout interval check is stopped and started only as needed.
+      if (!s.tm_in) {
+        s.tm_in = setInterval(timeout_check, options.interval)
       }
-      catch(e) {
-        if( toref ) {
-          clear_timeout(toref)
-        }
 
-        var et = error(e,options.msg_codes.execute,task)
-        try {
-          done(et,null)
-        }
-        catch(e) {
-          options.error(et)
-          options.error(error(e,options.msg_codes.abandoned,task))
-        }
-
-        check_clear()
-      }
+      process()
     })
+
+    return self
   }
 
 
-  self.execute = function( task ) {
-    inflight++
-
-    if( task.gate ) {
-      tr('gate',gated,inflight,task.id,task.desc)
-      gated = true
-      q.push(task, task.cb)
-    }
-    else if( gated && !task.ungate ) {
-      tr('wait',gated,inflight,task.id,task.desc)
-      waiters.push( task )
-    }
-    else {
-      tr('run',gated,inflight,task.id,task.desc)
-      work( task, task.cb )
-    }
+  // Pause the processing of work items. Newly added items, and items
+  // not yet started, will not proceed, but items already in progress
+  // will complete, and the clear function will be called once all in
+  // progress items finish.
+  self.pause = function () {
+    s.running = false
   }
 
 
-  self.clear = function() {
-    return ( 0 == inflight && 0 === waiters.length && 0 === q.length() )
+  // Submit a function that will be called each time there are no more
+  // work items to process. Multiple calls to this method will replace
+  // the previously registered clear function.
+  self.clear = function (done) {
+    Assert('function' === typeof done)
+    s.clear = done
+    return self
   }
 
-  return self
+
+  // Returns `true` when there are no more work items to process.
+  self.isclear = function () {
+    return (0 === q.length && 0 === progress.history.length)
+  }
+
+
+  // Add a work item. This is an object with fields:
+  //   * `fn` (function): the function that performs the work. Takes a
+  //     single argument, the callback function to call when the work is
+  //     complete. THis callback does **not** accept errors or
+  //     results. It's only purpose is to indicate that the work is
+  //     complete (whether failed or not). The work function itself must
+  //     handle callbacks to the application. Required.
+  //   * `id` (string): identifier for the work item. Optional.
+  //   * `tm` (integer): millisecond timeout specific to this work item,
+  //     overrides general timeout. Optional.
+  //   * `dn` (string): description of the work item, used in the
+  //     state description. Optional.
+  self.add = function (work) {
+    Assert('object' === typeof work)
+    Assert('function' === typeof work.fn)
+    Assert(null == work.id || 'string' === typeof work.id)
+    Assert(null == work.tm || 'number' === typeof work.tm)
+    Assert(null == work.dn || 'string' === typeof work.dn)
+
+    s.work_counter += 1
+    work.id = work.id || '' + s.work_counter
+    work.ge = self.id
+    work.tm = null == work.tm ? options.timeout : work.tm
+    work.dn = work.dn || work.fn.name || '' + Date.now()
+
+    work.fn = timeout(work)
+
+    q.push(work)
+
+    if (s.running) {
+      // Work items are **not** processed in the current execution path!
+      // This prevents lockup, and avoids false positives in unit tests.
+      // Work items are assumed to be inherently asynchronous.
+      setImmediate(function () {
+        process()
+      })
+    }
+
+    return self
+  }
+
+
+  // Create a new gate. Returns a new `GateExecutor` instance.  All
+  // work items added to the new instance must complete before the
+  // gate is cleared, and work items in the queue can be processed.  A
+  // gate is cleared when the new instance is **first** cleared. Work
+  // items subsequently added to the new instance are not considered
+  // part of the gate. Gates can extend to any depth and form a tree
+  // structure that requires breadth-first traversal in terms of the
+  // work item queue. Gates do not have timeouts, and can only be
+  // cleared when all added work items complete.
+  self.gate = function () {
+    var ge = new GateExecutor(options, instance_counter)
+
+    var fn = function gate (done) {
+      // This is the work function of the gate, which starts the new
+      // instance, and considers the gate work item complete when the
+      // work queue clears for the first time.
+      ge.start(done)
+    }
+
+    self.add({gate: ge, fn: fn})
+
+    return ge
+  }
+
+
+  // Return a data structure describing the current state of the work
+  // queues, and organised as a tree structure indicating the gating
+  // relationships.
+
+  self.state = function () {
+    var out = []
+
+    // First list any in-progress work items.
+    for (var hI = 0; hI < progress.history.length; ++hI) {
+      var pe = progress.history[hI]
+      if (!pe.done) {
+        out.push({s: 'a', ge: pe.ge, d: pe.dn, id: pe.id})
+      }
+    }
+
+    // Then list any waiting work items.
+    for (var qI = 0; qI < q.length; ++qI) {
+      var qe = q[qI]
+      if (qe.gate) {
+        // Go down a level when there's a gate.
+        out.push(qe.gate.state())
+      }
+      else {
+        out.push({s: 'w', ge: qe.ge, d: qe.dn, id: qe.id})
+      }
+    }
+
+    return out
+  }
 }
 
-
-module.exports = function( options) {
-  return new GateExecutor(options)
-}
+// The module function
+module.exports = make_GateExecutor
