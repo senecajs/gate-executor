@@ -30,16 +30,16 @@ describe('gate-executor', function () {
     ge2.add({ fn: function ddd (d) { log.push('ddd'); d() } })
 
     expect(ge.state()).to.deep.equal([
-      { s: 'w', ge: 1, d: 'aa', wid: 1 },
-      { s: 'w', ge: 1, d: 'bb', wid: 2 },
-      [ { s: 'w', ge: 2, d: 'ccc', wid: 1 },
-        { s: 'w', ge: 2, d: 'ddd', wid: 2 } ],
-      { s: 'w', ge: 1, d: 'dd', wid: 4 } ])
+      { s: 'w', ge: 1, d: 'aa', id: '1' },
+      { s: 'w', ge: 1, d: 'bb', id: '2' },
+      [ { s: 'w', ge: 2, d: 'ccc', id: '1' },
+        { s: 'w', ge: 2, d: 'ddd', id: '2' } ],
+      { s: 'w', ge: 1, d: 'dd', id: '4' } ])
 
     ge2.clear(function () {
       expect(log).to.deep.equal(['aa', 'bb', 'ccc', 'ddd'])
       expect(ge.state()).to.deep.equal([
-        { s: 'w', ge: 1, d: 'dd', wid: 4 } ])
+        { s: 'w', ge: 1, d: 'dd', id: '4' } ])
     })
 
     ge.clear(function () {
@@ -127,7 +127,7 @@ describe('gate-executor', function () {
     ge.start()
 
     setTimeout(function () {
-      expect(ge.state()).to.deep.equal([ { s: 'a', ge: 1, d: 'bb', wid: 2 } ])
+      expect(ge.state()).to.deep.equal([ { s: 'a', ge: 1, d: 'bb', id: '2' } ])
     }, 200)
   })
 
@@ -200,7 +200,7 @@ describe('gate-executor', function () {
           var geI = ge.length
           ge[geI] = ge[part.ge].gate()
           n = 'g_p_' + i + '_g_' + part.ge
-          eval("fn = function " + n +" (done) { log.push('" + n + "'); done() }")
+          eval("fn = function " + n + " (done) { log.push('" + n + "'); done() }")
           ge[geI].add({ fn: fn })
         }
       }
@@ -219,7 +219,7 @@ describe('gate-executor', function () {
 
     ge.add({
       id: 'aa',
-      description: 'Daa',
+      dn: 'Daa',
       fn: function (d) {
         log.push('s-aa')
         setTimeout(function () { log.push('e-aa'); d() }, 100)
@@ -230,7 +230,7 @@ describe('gate-executor', function () {
 
     ge2.add({
       id: 'bb',
-      description: 'Dbb',
+      dn: 'Dbb',
       tm: 400,
       fn: function bb (d) {
         log.push('s-bb')
@@ -240,7 +240,7 @@ describe('gate-executor', function () {
 
     ge.add({
       id: 'cc',
-      description: 'Dcc',
+      dn: 'Dcc',
       fn: function cc (d) {
         log.push('s-cc')
         setTimeout(function () { log.push('e-cc'); d() }, 100)
@@ -273,7 +273,7 @@ describe('gate-executor', function () {
       fn: function (d) {
         log.push('s-bb')
         expect(ge.isclear()).to.equal(false)
-          setTimeout(function () { log.push('e-bb'); d() }, 100)
+        setTimeout(function () { log.push('e-bb'); d() }, 100)
       }
     })
 
@@ -306,7 +306,7 @@ describe('gate-executor', function () {
       }, 333)
     })
   })
- })
+})
 
 
 var Log_all_expected = require('./log_all_expected.js')

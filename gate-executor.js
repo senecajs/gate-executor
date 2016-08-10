@@ -18,11 +18,11 @@ function make_GateExecutor (options) {
   options.interval = null == options.interval ? 111 : options.interval
   options.timeout = null == options.timeout ? 2222 : options.timeout
 
-  Assert.ok('object' === typeof options)
-  Assert.ok('number' === typeof options.interval)
-  Assert.ok('number' === typeof options.timeout)
-  Assert.ok(0 < options.interval)
-  Assert.ok(0 < options.timeout)
+  Assert('object' === typeof options)
+  Assert('number' === typeof options.interval)
+  Assert('number' === typeof options.timeout)
+  Assert(0 < options.interval)
+  Assert(0 < options.timeout)
 
   return new GateExecutor(options, 0)
 }
@@ -33,6 +33,10 @@ function make_GateExecutor (options) {
 //     used as identifier.
 function GateExecutor (options, instance_counter) {
   var self = this
+
+  Assert('object' === typeof options)
+  Assert('number' === typeof instance_counter)
+
   self.id = ++instance_counter
 
   // Work queue.
@@ -47,6 +51,9 @@ function GateExecutor (options, instance_counter) {
     // Work history - a list of work items in the order executed.
     history: []
   }
+
+  // List of work items to check for timeouts.
+  var timeout_checklist = []
 
   // Internal state.
   var s = {
@@ -90,7 +97,7 @@ function GateExecutor (options, instance_counter) {
     // Process the next work item, returning `true` if there was one.
     function next () {
       var res = false
-      var work
+      var work = null
 
       // Remove next work item from the front of the work queue.
       if (!s.gate) {
@@ -98,6 +105,9 @@ function GateExecutor (options, instance_counter) {
       }
 
       if (work) {
+        Assert('object' === typeof work)
+        Assert('string' === typeof work.id)
+        Assert('function' === typeof work.fn)
 
         // Add work item to the work-in-progress set.
         progress.lookup[work.id] = work
@@ -166,16 +176,17 @@ function GateExecutor (options, instance_counter) {
   }
 
 
-  // List of work items to check for timeouts.
-  var timeout_checklist = []
-
-
   // Wrapper function to construct the timeout check.
   function timeout (work) {
+    Assert('object' === typeof work)
+    Assert('function' === typeof work.fn)
+
     work.finished = false
     work.orig_fn = work.fn
 
     var timeout_fn = function (callback) {
+      Assert('function' === typeof callback)
+
       work.callback = callback
       work.start = Date.now()
       timeout_checklist.push(work)
@@ -193,7 +204,8 @@ function GateExecutor (options, instance_counter) {
     return timeout_fn
   }
 
-  // To be run peridically via setInterval. For timed out work items,
+
+  // To be run periodically via setInterval. For timed out work items,
   // calls the done callback to allow work queue to proceed, and makes
   // the work item as finished. Work items can receive notification of
   // timeouts by providing an `on_timeout` callback property in the
@@ -222,11 +234,13 @@ function GateExecutor (options, instance_counter) {
     }
   }
 
+
   // Start processing work items. Must be called to start processing.
   // Can be called at anytime, interspersed with calls to other
   // methods, including `add`. Takes a function as argument, which is
   // called only once on the next time the queues are clear.
   self.start = function (firstclear) {
+    Assert(null == firstclear || 'function' === typeof firstclear)
 
     // Allow API chaining by not starting in current execution path.
     setImmediate(function () {
@@ -247,31 +261,65 @@ function GateExecutor (options, instance_counter) {
     return self
   }
 
+
+  // Pause the processing of work items. Newly added items, and items
+  // not yet started, will not proceed, but items already in progress
+  // will complete, and the clear function will be called once all in
+  // progress items finish.
   self.pause = function () {
     s.running = false
   }
 
+
+  // Submit a function that will be called each time there are no more
+  // work items to process. Multiple calls to this method will replace
+  // the previously registered clear function.
   self.clear = function (done) {
+    Assert('function' === typeof done)
     s.clear = done
     return self
   }
 
+
+  // Returns `true` when there are no more work items to process.
   self.isclear = function () {
     return (0 === q.length && 0 === progress.history.length)
   }
 
+
+  // Add a work item. This is an object with fields:
+  //   * `fn` (function): the function that performs the work. Takes a
+  //     single argument, the callback function to call when the work is
+  //     complete. THis callback does **not** accept errors or
+  //     results. It's only purpose is to indicate that the work is
+  //     complete (whether failed or not). The work function itself must
+  //     handle callbacks to the application. Required.
+  //   * `id` (string): identifier for the work item. Optional.
+  //   * `tm` (integer): millisecond timeout specific to this work item,
+  //     overrides general timeout. Optional.
+  //   * `dn` (string): description of the work item, used in the
+  //     state description. Optional.
   self.add = function (work) {
+    Assert('object' === typeof work)
+    Assert('function' === typeof work.fn)
+    Assert(null == work.id || 'string' === typeof work.id)
+    Assert(null == work.tm || 'number' === typeof work.tm)
+    Assert(null == work.dn || 'string' === typeof work.dn)
+
     s.work_counter += 1
-    work.id = work.id || s.work_counter
+    work.id = work.id || '' + s.work_counter
     work.ge = self.id
     work.tm = null == work.tm ? options.timeout : work.tm
-    work.description = work.description || work.fn.name || '' + Date.now()
+    work.dn = work.dn || work.fn.name || '' + Date.now()
 
     work.fn = timeout(work)
 
     q.push(work)
 
     if (s.running) {
+      // Work items are **not** processed in the current execution path!
+      // This prevents lockup, and avoids false positives in unit tests.
+      // Work items are assumed to be inherently asynchronous.
       setImmediate(function () {
         process()
       })
@@ -280,9 +328,23 @@ function GateExecutor (options, instance_counter) {
     return self
   }
 
+
+  // Create a new gate. Returns a new `GateExecutor` instance.  All
+  // work items added to the new instance must complete before the
+  // gate is cleared, and work items in the queue can be processed.  A
+  // gate is cleared when the new instance is **first** cleared. Work
+  // items subsequently added to the new instance are not considered
+  // part of the gate. Gates can extend to any depth and form a tree
+  // structure that requires breadth-first traversal in terms of the
+  // work item queue. Gates do not have timeouts, and can only be
+  // cleared when all added work items complete.
   self.gate = function () {
     var ge = new GateExecutor(options, instance_counter)
+
     var fn = function gate (done) {
+      // This is the work function of the gate, which starts the new
+      // instance, and considers the gate work item complete when the
+      // work queue clears for the first time.
       ge.start(done)
     }
 
@@ -291,27 +353,37 @@ function GateExecutor (options, instance_counter) {
     return ge
   }
 
-  self.state = function () {
-    var o = []
 
+  // Return a data structure describing the current state of the work
+  // queues, and organised as a tree structure indicating the gating
+  // relationships.
+
+  self.state = function () {
+    var out = []
+
+    // First list any in-progress work items.
     for (var hI = 0; hI < progress.history.length; ++hI) {
       var pe = progress.history[hI]
       if (!pe.done) {
-        o.push({s: 'a', ge: pe.ge, d: pe.description, wid: pe.id})
+        out.push({s: 'a', ge: pe.ge, d: pe.dn, id: pe.id})
       }
     }
 
+    // Then list any waiting work items.
     for (var qI = 0; qI < q.length; ++qI) {
       var qe = q[qI]
       if (qe.gate) {
-        o.push(qe.gate.state())
+        // Go down a level when there's a gate.
+        out.push(qe.gate.state())
       }
       else {
-        o.push({s: 'w', ge: qe.ge, d: qe.description, wid: qe.id})
+        out.push({s: 'w', ge: qe.ge, d: qe.dn, id: qe.id})
       }
     }
-    return o
+
+    return out
   }
 }
 
+// The module function
 module.exports = make_GateExecutor

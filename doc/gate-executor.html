@@ -75,11 +75,11 @@
   options.interval = <span class="hljs-literal">null</span> == options.interval ? <span class="hljs-number">111</span> : options.interval
   options.timeout = <span class="hljs-literal">null</span> == options.timeout ? <span class="hljs-number">2222</span> : options.timeout
 
-  Assert.ok(<span class="hljs-string">'object'</span> === <span class="hljs-keyword">typeof</span> options)
-  Assert.ok(<span class="hljs-string">'number'</span> === <span class="hljs-keyword">typeof</span> options.interval)
-  Assert.ok(<span class="hljs-string">'number'</span> === <span class="hljs-keyword">typeof</span> options.timeout)
-  Assert.ok(<span class="hljs-number">0</span> &lt; options.interval)
-  Assert.ok(<span class="hljs-number">0</span> &lt; options.timeout)
+  Assert(<span class="hljs-string">'object'</span> === <span class="hljs-keyword">typeof</span> options)
+  Assert(<span class="hljs-string">'number'</span> === <span class="hljs-keyword">typeof</span> options.interval)
+  Assert(<span class="hljs-string">'number'</span> === <span class="hljs-keyword">typeof</span> options.timeout)
+  Assert(<span class="hljs-number">0</span> &lt; options.interval)
+  Assert(<span class="hljs-number">0</span> &lt; options.timeout)
 
   <span class="hljs-keyword">return</span> <span class="hljs-keyword">new</span> GateExecutor(options, <span class="hljs-number">0</span>)
 }</pre></div></div>
@@ -104,6 +104,10 @@ used as identifier.</li>
             
             <div class="content"><div class='highlight'><pre><span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">GateExecutor</span> (<span class="hljs-params">options, instance_counter</span>) </span>{
   <span class="hljs-keyword">var</span> self = <span class="hljs-keyword">this</span>
+
+  Assert(<span class="hljs-string">'object'</span> === <span class="hljs-keyword">typeof</span> options)
+  Assert(<span class="hljs-string">'number'</span> === <span class="hljs-keyword">typeof</span> instance_counter)
+
   self.id = ++instance_counter</pre></div></div>
             
         </li>
@@ -176,11 +180,11 @@ used as identifier.</li>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-9">&#182;</a>
               </div>
-              <p>Internal state.</p>
+              <p>List of work items to check for timeouts.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> s = {</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> timeout_checklist = []</pre></div></div>
             
         </li>
         
@@ -191,11 +195,11 @@ used as identifier.</li>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-10">&#182;</a>
               </div>
-              <p>Count of work items added to this instance. Used as generated work identifier.</p>
+              <p>Internal state.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>    work_counter: <span class="hljs-number">0</span>,</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> s = {</pre></div></div>
             
         </li>
         
@@ -205,6 +209,21 @@ used as identifier.</li>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-11">&#182;</a>
+              </div>
+              <p>Count of work items added to this instance. Used as generated work identifier.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    work_counter: <span class="hljs-number">0</span>,</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-12">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-12">&#182;</a>
               </div>
               <p>When <code>true</code>, the instance is in a gated state, and work cannot proceed
 until the gated in-progress work item is completed.</p>
@@ -216,11 +235,11 @@ until the gated in-progress work item is completed.</p>
         </li>
         
         
-        <li id="section-12">
+        <li id="section-13">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-12">&#182;</a>
+                <a class="pilcrow" href="#section-13">&#182;</a>
               </div>
               <p>When <code>true</code>, the instance processes work items as they arrive.
 When <code>false</code>, no processing happens, and the instance must be started by
@@ -233,11 +252,11 @@ calling the <code>start</code> method.</p>
         </li>
         
         
-        <li id="section-13">
+        <li id="section-14">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-13">&#182;</a>
+                <a class="pilcrow" href="#section-14">&#182;</a>
               </div>
               <p>A function called when the work queue and work-in-progress set
 are empty.  Set by calling the <code>clear</code> method. Will be called
@@ -250,11 +269,11 @@ each time the instance empty.</p>
         </li>
         
         
-        <li id="section-14">
+        <li id="section-15">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-14">&#182;</a>
+                <a class="pilcrow" href="#section-15">&#182;</a>
               </div>
               <p>A function called once only when the work queue and
 work-in-progress set are first emptied after each start. Set as
@@ -267,11 +286,11 @@ an optional argument to the <code>start</code> method.</p>
         </li>
         
         
-        <li id="section-15">
+        <li id="section-16">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-15">&#182;</a>
+                <a class="pilcrow" href="#section-16">&#182;</a>
               </div>
               <p>Timeout interval reference value returned by <code>setInterval</code>.
 Timeouts are not checked using <code>setTimeout</code>, as it is more
@@ -285,11 +304,11 @@ efficient, and more than sufficient, to check timeouts periodically.</p>
         </li>
         
         
-        <li id="section-16">
+        <li id="section-17">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-16">&#182;</a>
+                <a class="pilcrow" href="#section-17">&#182;</a>
               </div>
               <p>Process the next work item.</p>
 
@@ -300,11 +319,11 @@ efficient, and more than sufficient, to check timeouts periodically.</p>
         </li>
         
         
-        <li id="section-17">
+        <li id="section-18">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-17">&#182;</a>
+                <a class="pilcrow" href="#section-18">&#182;</a>
               </div>
               <p>If not running, don’t process any work items.</p>
 
@@ -317,11 +336,11 @@ efficient, and more than sufficient, to check timeouts periodically.</p>
         </li>
         
         
-        <li id="section-18">
+        <li id="section-19">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-18">&#182;</a>
+                <a class="pilcrow" href="#section-19">&#182;</a>
               </div>
               <p>Process the next work item, returning <code>true</code> if there was one.</p>
 
@@ -329,26 +348,7 @@ efficient, and more than sufficient, to check timeouts periodically.</p>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">next</span> (<span class="hljs-params"></span>) </span>{
       <span class="hljs-keyword">var</span> res = <span class="hljs-literal">false</span>
-      <span class="hljs-keyword">var</span> work</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-19">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-19">&#182;</a>
-              </div>
-              <p>Remove next work item from the front of the work queue.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (!s.gate) {
-        work = q.shift()
-      }
-
-      <span class="hljs-keyword">if</span> (work) {</pre></div></div>
+      <span class="hljs-keyword">var</span> work = <span class="hljs-literal">null</span></pre></div></div>
             
         </li>
         
@@ -358,6 +358,28 @@ efficient, and more than sufficient, to check timeouts periodically.</p>
               
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-20">&#182;</a>
+              </div>
+              <p>Remove next work item from the front of the work queue.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      <span class="hljs-keyword">if</span> (!s.gate) {
+        work = q.shift()
+      }
+
+      <span class="hljs-keyword">if</span> (work) {
+        Assert(<span class="hljs-string">'object'</span> === <span class="hljs-keyword">typeof</span> work)
+        Assert(<span class="hljs-string">'string'</span> === <span class="hljs-keyword">typeof</span> work.id)
+        Assert(<span class="hljs-string">'function'</span> === <span class="hljs-keyword">typeof</span> work.fn)</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-21">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-21">&#182;</a>
               </div>
               <p>Add work item to the work-in-progress set.</p>
 
@@ -369,11 +391,11 @@ efficient, and more than sufficient, to check timeouts periodically.</p>
         </li>
         
         
-        <li id="section-21">
+        <li id="section-22">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-21">&#182;</a>
+                <a class="pilcrow" href="#section-22">&#182;</a>
               </div>
               <p>If work item is a gate, set the state of the instance as
 gated.  This work item will need to complete before later
@@ -386,11 +408,11 @@ work items in the queue can be processed.</p>
         </li>
         
         
-        <li id="section-22">
+        <li id="section-23">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-22">&#182;</a>
+                <a class="pilcrow" href="#section-23">&#182;</a>
               </div>
               <p>Call the work item function (which does the real work),
 passing a callback. This callback has no arguments
@@ -405,11 +427,11 @@ own errors and results.</p>
         </li>
         
         
-        <li id="section-23">
+        <li id="section-24">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-23">&#182;</a>
+                <a class="pilcrow" href="#section-24">&#182;</a>
               </div>
               <p>Remove the work item from the work-in-progress set.  As
 work items may complete out of order, prune the history
@@ -428,11 +450,11 @@ reached on another processing round.</p>
         </li>
         
         
-        <li id="section-24">
+        <li id="section-25">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-24">&#182;</a>
+                <a class="pilcrow" href="#section-25">&#182;</a>
               </div>
               <p>If the work item was a gate, it is now complete, and the
 instance can be ungated, allowing later work items in the
@@ -447,11 +469,11 @@ queue to be processed.</p>
         </li>
         
         
-        <li id="section-25">
+        <li id="section-26">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-25">&#182;</a>
+                <a class="pilcrow" href="#section-26">&#182;</a>
               </div>
               <p>If work queue and work-in-progress set are empty, then
 call the registered clear functions.</p>
@@ -476,11 +498,11 @@ call the registered clear functions.</p>
         </li>
         
         
-        <li id="section-26">
+        <li id="section-27">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-26">&#182;</a>
+                <a class="pilcrow" href="#section-27">&#182;</a>
               </div>
               <p>Process each work item on next tick to avoid lockups.</p>
 
@@ -499,11 +521,11 @@ call the registered clear functions.</p>
         </li>
         
         
-        <li id="section-27">
+        <li id="section-28">
             <div class="annotation">
               
               <div class="pilwrap ">
-                <a class="pilcrow" href="#section-27">&#182;</a>
+                <a class="pilcrow" href="#section-28">&#182;</a>
               </div>
               <p>Keep processing work items until none are left or a gate is reached.</p>
 
@@ -511,21 +533,6 @@ call the registered clear functions.</p>
             
             <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">while</span> (next()) {}
   }</pre></div></div>
-            
-        </li>
-        
-        
-        <li id="section-28">
-            <div class="annotation">
-              
-              <div class="pilwrap ">
-                <a class="pilcrow" href="#section-28">&#182;</a>
-              </div>
-              <p>List of work items to check for timeouts.</p>
-
-            </div>
-            
-            <div class="content"><div class='highlight'><pre>  <span class="hljs-keyword">var</span> timeout_checklist = []</pre></div></div>
             
         </li>
         
@@ -541,10 +548,15 @@ call the registered clear functions.</p>
             </div>
             
             <div class="content"><div class='highlight'><pre>  <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">timeout</span> (<span class="hljs-params">work</span>) </span>{
+    Assert(<span class="hljs-string">'object'</span> === <span class="hljs-keyword">typeof</span> work)
+    Assert(<span class="hljs-string">'function'</span> === <span class="hljs-keyword">typeof</span> work.fn)
+
     work.finished = <span class="hljs-literal">false</span>
     work.orig_fn = work.fn
 
     <span class="hljs-keyword">var</span> timeout_fn = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">callback</span>) </span>{
+      Assert(<span class="hljs-string">'function'</span> === <span class="hljs-keyword">typeof</span> callback)
+
       work.callback = callback
       work.start = <span class="hljs-built_in">Date</span>.now()
       timeout_checklist.push(work)
@@ -584,7 +596,7 @@ call the registered clear functions.</p>
               <div class="pilwrap ">
                 <a class="pilcrow" href="#section-31">&#182;</a>
               </div>
-              <p>To be run peridically via setInterval. For timed out work items,
+              <p>To be run periodically via setInterval. For timed out work items,
 calls the done callback to allow work queue to proceed, and makes
 the work item as finished. Work items can receive notification of
 timeouts by providing an <code>on_timeout</code> callback property in the
@@ -632,7 +644,8 @@ called only once on the next time the queues are clear.</p>
 
             </div>
             
-            <div class="content"><div class='highlight'><pre>  self.start = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">firstclear</span>) </span>{</pre></div></div>
+            <div class="content"><div class='highlight'><pre>  self.start = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">firstclear</span>) </span>{
+    Assert(<span class="hljs-literal">null</span> == firstclear || <span class="hljs-string">'function'</span> === <span class="hljs-keyword">typeof</span> firstclear)</pre></div></div>
             
         </li>
         
@@ -675,76 +688,277 @@ called only once on the next time the queues are clear.</p>
     })
 
     <span class="hljs-keyword">return</span> self
-  }
+  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-35">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-35">&#182;</a>
+              </div>
+              <p>Pause the processing of work items. Newly added items, and items
+not yet started, will not proceed, but items already in progress
+will complete, and the clear function will be called once all in
+progress items finish.</p>
 
-  self.pause = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  self.pause = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
     s.running = <span class="hljs-literal">false</span>
-  }
+  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-36">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-36">&#182;</a>
+              </div>
+              <p>Submit a function that will be called each time there are no more
+work items to process. Multiple calls to this method will replace
+the previously registered clear function.</p>
 
-  self.clear = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">done</span>) </span>{
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  self.clear = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">done</span>) </span>{
+    Assert(<span class="hljs-string">'function'</span> === <span class="hljs-keyword">typeof</span> done)
     s.clear = done
     <span class="hljs-keyword">return</span> self
-  }
+  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-37">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-37">&#182;</a>
+              </div>
+              <p>Returns <code>true</code> when there are no more work items to process.</p>
 
-  self.isclear = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  self.isclear = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">return</span> (<span class="hljs-number">0</span> === q.length &amp;&amp; <span class="hljs-number">0</span> === progress.history.length)
-  }
+  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-38">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-38">&#182;</a>
+              </div>
+              <p>Add a work item. This is an object with fields:</p>
+<ul>
+<li><code>fn</code> (function): the function that performs the work. Takes a
+single argument, the callback function to call when the work is
+complete. THis callback does <strong>not</strong> accept errors or
+results. It’s only purpose is to indicate that the work is
+complete (whether failed or not). The work function itself must
+handle callbacks to the application. Required.</li>
+<li><code>id</code> (string): identifier for the work item. Optional.</li>
+<li><code>tm</code> (integer): millisecond timeout specific to this work item,
+overrides general timeout. Optional.</li>
+<li><code>dn</code> (string): description of the work item, used in the
+state description. Optional.</li>
+</ul>
 
-  self.add = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">work</span>) </span>{
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  self.add = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params">work</span>) </span>{
+    Assert(<span class="hljs-string">'object'</span> === <span class="hljs-keyword">typeof</span> work)
+    Assert(<span class="hljs-string">'function'</span> === <span class="hljs-keyword">typeof</span> work.fn)
+    Assert(<span class="hljs-literal">null</span> == work.id || <span class="hljs-string">'string'</span> === <span class="hljs-keyword">typeof</span> work.id)
+    Assert(<span class="hljs-literal">null</span> == work.tm || <span class="hljs-string">'number'</span> === <span class="hljs-keyword">typeof</span> work.tm)
+    Assert(<span class="hljs-literal">null</span> == work.dn || <span class="hljs-string">'string'</span> === <span class="hljs-keyword">typeof</span> work.dn)
+
     s.work_counter += <span class="hljs-number">1</span>
-    work.id = work.id || s.work_counter
+    work.id = work.id || <span class="hljs-string">''</span> + s.work_counter
     work.ge = self.id
     work.tm = <span class="hljs-literal">null</span> == work.tm ? options.timeout : work.tm
-    work.description = work.description || work.fn.name || <span class="hljs-string">''</span> + <span class="hljs-built_in">Date</span>.now()
+    work.dn = work.dn || work.fn.name || <span class="hljs-string">''</span> + <span class="hljs-built_in">Date</span>.now()
 
     work.fn = timeout(work)
 
     q.push(work)
 
-    <span class="hljs-keyword">if</span> (s.running) {
-      setImmediate(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+    <span class="hljs-keyword">if</span> (s.running) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-39">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-39">&#182;</a>
+              </div>
+              <p>Work items are <strong>not</strong> processed in the current execution path!
+This prevents lockup, and avoids false positives in unit tests.
+Work items are assumed to be inherently asynchronous.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      setImmediate(<span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
         process()
       })
     }
 
     <span class="hljs-keyword">return</span> self
-  }
+  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-40">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-40">&#182;</a>
+              </div>
+              <p>Create a new gate. Returns a new <code>GateExecutor</code> instance.  All
+work items added to the new instance must complete before the
+gate is cleared, and work items in the queue can be processed.  A
+gate is cleared when the new instance is <strong>first</strong> cleared. Work
+items subsequently added to the new instance are not considered
+part of the gate. Gates can extend to any depth and form a tree
+structure that requires breadth-first traversal in terms of the
+work item queue. Gates do not have timeouts, and can only be
+cleared when all added work items complete.</p>
 
-  self.gate = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>  self.gate = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
     <span class="hljs-keyword">var</span> ge = <span class="hljs-keyword">new</span> GateExecutor(options, instance_counter)
-    <span class="hljs-keyword">var</span> fn = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">gate</span> (<span class="hljs-params">done</span>) </span>{
-      ge.start(done)
+
+    <span class="hljs-keyword">var</span> fn = <span class="hljs-function"><span class="hljs-keyword">function</span> <span class="hljs-title">gate</span> (<span class="hljs-params">done</span>) </span>{</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-41">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-41">&#182;</a>
+              </div>
+              <p>This is the work function of the gate, which starts the new
+instance, and considers the gate work item complete when the
+work queue clears for the first time.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>      ge.start(done)
     }
 
     self.add({gate: ge, fn: fn})
 
     <span class="hljs-keyword">return</span> ge
-  }
+  }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-42">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-42">&#182;</a>
+              </div>
+              <p>Return a data structure describing the current state of the work
+queues, and organised as a tree structure indicating the gating
+relationships.</p>
 
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>
   self.state = <span class="hljs-function"><span class="hljs-keyword">function</span> (<span class="hljs-params"></span>) </span>{
-    <span class="hljs-keyword">var</span> o = []
+    <span class="hljs-keyword">var</span> out = []</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-43">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-43">&#182;</a>
+              </div>
+              <p>First list any in-progress work items.</p>
 
-    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> hI = <span class="hljs-number">0</span>; hI &lt; progress.history.length; ++hI) {
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> hI = <span class="hljs-number">0</span>; hI &lt; progress.history.length; ++hI) {
       <span class="hljs-keyword">var</span> pe = progress.history[hI]
       <span class="hljs-keyword">if</span> (!pe.done) {
-        o.push({s: <span class="hljs-string">'a'</span>, ge: pe.ge, d: pe.description, wid: pe.id})
+        out.push({s: <span class="hljs-string">'a'</span>, ge: pe.ge, d: pe.dn, id: pe.id})
       }
-    }
+    }</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-44">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-44">&#182;</a>
+              </div>
+              <p>Then list any waiting work items.</p>
 
-    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> qI = <span class="hljs-number">0</span>; qI &lt; q.length; ++qI) {
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>    <span class="hljs-keyword">for</span> (<span class="hljs-keyword">var</span> qI = <span class="hljs-number">0</span>; qI &lt; q.length; ++qI) {
       <span class="hljs-keyword">var</span> qe = q[qI]
-      <span class="hljs-keyword">if</span> (qe.gate) {
-        o.push(qe.gate.state())
+      <span class="hljs-keyword">if</span> (qe.gate) {</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-45">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-45">&#182;</a>
+              </div>
+              <p>Go down a level when there’s a gate.</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre>        out.push(qe.gate.state())
       }
       <span class="hljs-keyword">else</span> {
-        o.push({s: <span class="hljs-string">'w'</span>, ge: qe.ge, d: qe.description, wid: qe.id})
+        out.push({s: <span class="hljs-string">'w'</span>, ge: qe.ge, d: qe.dn, id: qe.id})
       }
     }
-    <span class="hljs-keyword">return</span> o
-  }
-}
 
-<span class="hljs-built_in">module</span>.exports = make_GateExecutor</pre></div></div>
+    <span class="hljs-keyword">return</span> out
+  }
+}</pre></div></div>
+            
+        </li>
+        
+        
+        <li id="section-46">
+            <div class="annotation">
+              
+              <div class="pilwrap ">
+                <a class="pilcrow" href="#section-46">&#182;</a>
+              </div>
+              <p>The module function</p>
+
+            </div>
+            
+            <div class="content"><div class='highlight'><pre><span class="hljs-built_in">module</span>.exports = make_GateExecutor</pre></div></div>
             
         </li>
         
