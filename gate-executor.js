@@ -26,7 +26,7 @@ function GateExecutor (options, gec) {
   }
 
   var s = {
-    pc: 10000*self.id,
+    pc: 10000000 * self.id,
     idc: 0,
     gate: false,
     running: false,
@@ -37,6 +37,10 @@ function GateExecutor (options, gec) {
 
   function process (whence) {
     s.pc += 1
+
+    if (!s.running) {
+      return
+    }
 
     function next() {
       var res = false
@@ -67,6 +71,8 @@ function GateExecutor (options, gec) {
           }
 
           if (0 === q.length && 0 === p.s.length) {
+            //console.log('GE',self.id,'CLEAR')
+
             clearInterval(s.tm_in)
             s.tm_in = null
 
@@ -122,7 +128,7 @@ function GateExecutor (options, gec) {
       var work = inflight[i]
       // console.log('GE',self.id,work.id,work.description,'T',work.tm < now - work.start,work.fin)
 
-      if (work.tm < now - work.start && !work.fin) {
+      if (!work.gate && !work.fin && work.tm < now - work.start) {
         //console.log('GE',self.id,work.id,work.description,'TT',work.tm < now - work.start,work.fin)
         work.fin = true
         work.callback()
@@ -183,9 +189,9 @@ function GateExecutor (options, gec) {
     // console.log(s.pc,'A',work.description,self.id,self.state())
     
     if (s.running) {
-      if (!s.tm_in) {
-        s.tm_in = setInterval(timeout_check, options.interval)
-      }
+      //if (!s.tm_in) {
+      //  s.tm_in = setInterval(timeout_check, options.interval)
+      //}
 
       setImmediate(function () {
         process('add:'+work.id)
