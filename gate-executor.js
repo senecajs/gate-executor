@@ -86,8 +86,9 @@ function GateExecutor (options, instance_counter) {
     tm_in: null
   }
 
+
   // Process the next work item.
-  function process () {
+  function processor () {
 
     // If not running, don't process any work items.
     if (!s.running) {
@@ -95,8 +96,8 @@ function GateExecutor (options, instance_counter) {
     }
 
     // Process the next work item, returning `true` if there was one.
-    function next () {
-      var res = false
+    do {
+      var next = false
       var work = null
 
       // Remove next work item from the front of the work queue.
@@ -123,85 +124,71 @@ function GateExecutor (options, instance_counter) {
         // (including no error!).  It is called only to indicate
         // completion of the work item.  Work items must handle their
         // own errors and results.
-        work.fn(function () {
+        work.start = Date.now()
+        work.callback = make_work_fn_callback(work)
 
-          // Remove the work item from the work-in-progress set.  As
-          // work items may complete out of order, prune the history
-          // from the front until the first incomplete work
-          // item. Later complete work items will eventually be
-          // reached on another processing round.
-          progress.lookup[work.id].done = true
-          delete progress.lookup[work.id]
-          while (progress.history[0] && progress.history[0].done) {
-            progress.history.shift()
-          }
+        timeout_checklist.push(work)
+        work.fn(work.callback)
 
-          // If the work item was a gate, it is now complete, and the
-          // instance can be ungated, allowing later work items in the
-          // queue to be processed.
-          if (work.gate) {
-            s.gate = false
-          }
-
-          // If work queue and work-in-progress set are empty, then
-          // call the registered clear functions.
-          if (0 === q.length && 0 === progress.history.length) {
-            clearInterval(s.tm_in)
-            s.tm_in = null
-
-            if (s.firstclear) {
-              var fc = s.firstclear
-              s.firstclear = null
-              fc()
-            }
-
-            if (s.clear) {
-              s.clear()
-            }
-          }
-
-          // Process each work item on next tick to avoid lockups.
-          setImmediate(function () {
-            process()
-          })
-        })
-
-        res = true
+        next = true
       }
-      return res
     }
 
     // Keep processing work items until none are left or a gate is reached.
-    while (next()) {}
+    while (next)
   }
 
 
-  // Wrapper function to construct the timeout check.
-  function timeout (work) {
-    Assert('object' === typeof work)
-    Assert('function' === typeof work.fn)
+  // Create the callback for the work function
+  function make_work_fn_callback (work) {
+    return function work_fn_callback () {
+      if (work.done) {
+        return
+      }
 
-    work.finished = false
-    work.orig_fn = work.fn
+      // Remove the work item from the work-in-progress set.  As
+      // work items may complete out of order, prune the history
+      // from the front until the first incomplete work
+      // item. Later complete work items will eventually be
+      // reached on another processing round.
+      work.done = true
+      delete progress.lookup[work.id]
 
-    var timeout_fn = function (callback) {
-      Assert('function' === typeof callback)
+      while (progress.history[0] && progress.history[0].done) {
+        progress.history.shift()
+      }
 
-      work.callback = callback
-      work.start = Date.now()
-      timeout_checklist.push(work)
+      while (timeout_checklist[0] && timeout_checklist[0].done) {
+        timeout_checklist.shift()
+      }
 
-      work.orig_fn(function () {
-        // Absorb multiple callbacks.
-        if (work.finished) {
-          return
+      // If the work item was a gate, it is now complete, and the
+      // instance can be ungated, allowing later work items in the
+      // queue to be processed.
+      if (work.gate) {
+        s.gate = false
+      }
+
+      // If work queue and work-in-progress set are empty, then
+      // call the registered clear functions.
+      if (0 === q.length && 0 === progress.history.length) {
+        clearInterval(s.tm_in)
+        s.tm_in = null
+
+        if (s.firstclear) {
+          var fc = s.firstclear
+          s.firstclear = null
+          fc()
         }
-        work.finished = true
-        work.callback()
-      })
-    }
 
-    return timeout_fn
+        if (s.clear) {
+          s.clear()
+        }
+      }
+
+      // Process each work item on next tick to avoid lockups.
+      setImmediate(processor)
+    }
   }
 
 
@@ -219,18 +206,13 @@ function GateExecutor (options, instance_counter) {
     for (var i = 0; i < timeout_checklist.length; ++i) {
       work = timeout_checklist[i]
 
-      if (!work.gate && !work.finished && work.tm < now - work.start) {
-        work.finished = true
+      if (!work.gate && !work.done && work.tm < now - work.start) {
         work.callback()
 
         if (work.ontm) {
           work.ontm()
         }
       }
-    }
-
-    while (timeout_checklist[0] && timeout_checklist[0].finished) {
-      work = timeout_checklist.shift()
     }
   }
 
@@ -255,7 +237,7 @@ function GateExecutor (options, instance_counter) {
         s.tm_in = setInterval(timeout_check, options.interval)
       }
 
-      process()
+      processor()
     })
 
     return self
@@ -310,9 +292,10 @@ function GateExecutor (options, instance_counter) {
     work.id = work.id || '' + s.work_counter
     work.ge = self.id
     work.tm = null == work.tm ? options.timeout : work.tm
-    work.dn = work.dn || work.fn.name || '' + Date.now()
 
-    work.fn = timeout(work)
+    work.dn = (work.dn ||
+               work.fn.name ||
+               '' + Date.now())
 
     q.push(work)
 
@@ -320,9 +303,7 @@ function GateExecutor (options, instance_counter) {
       // Work items are **not** processed in the current execution path!
       // This prevents lockup, and avoids false positives in unit tests.
       // Work items are assumed to be inherently asynchronous.
-      setImmediate(function () {
-        process()
-      })
+      setImmediate(processor)
     }
 
     return self
@@ -357,7 +338,6 @@ function GateExecutor (options, instance_counter) {
   // Return a data structure describing the current state of the work
   // queues, and organised as a tree structure indicating the gating
   // relationships.
-
   self.state = function () {
     var out = []
 
@@ -379,6 +359,13 @@ function GateExecutor (options, instance_counter) {
       else {
         out.push({s: 'w', ge: qe.ge, d: qe.dn, id: qe.id})
       }
+    }
+
+    out.internal = {
+      qlen: q.length,
+      hlen: progress.history.length,
+      klen: Object.keys(progress.lookup).length,
+      tlen: timeout_check.length
     }
 
     return out

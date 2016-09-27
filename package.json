@@ -1,10 +1,10 @@
 {
   "name": "gate-executor",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A work queue that can be gated, stopping to wait for sub-queues to complete.",
   "main": "gate-executor.js",
   "scripts": {
-    "test": "lab -v -P test -t 100 -L -I Reflect",
+    "test": "lab -v -P test -t 99 -L -I Reflect",
     "annotate": "docco gate-executor.js -o doc"
   },
   "repository": {

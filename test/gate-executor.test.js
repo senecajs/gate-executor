@@ -11,7 +11,6 @@ var expect = Code.expect
 
 var GateExecutor = require('..')
 
-
 describe('gate-executor', function () {
   it('readme', function (done) {
     var ge = GateExecutor()
@@ -195,6 +194,10 @@ describe('gate-executor', function () {
 
     function verify () {
       expect(log_all).to.deep.equal(Log_all_expected)
+
+      // IMPORTANT: confirms memory usage is well-behaved
+      expect(process.memoryUsage().rss).below(71000000)
+
       done()
     }
 
@@ -342,6 +345,34 @@ describe('gate-executor', function () {
           done()
         })
       }, 333)
+    })
+  })
+
+  it('memory', function (done) {
+    var ge = GateExecutor()
+    var start = Date.now()
+
+    for (var i = 0; i < 10000; ++i) {
+      ge.add({
+        fn: function foo (done) {
+          done()
+        }
+      })
+    }
+    var added = Date.now()
+
+    ge.start(function () {
+      var end = Date.now()
+      var ges = ge.state().internal
+
+      expect(end - start).below(444)
+      expect(added - start).below(222)
+      expect(ges.qlen).to.equal(0)
+      expect(ges.hlen).to.equal(0)
+      expect(ges.klen).to.equal(0)
+      expect(ges.tlen).to.equal(0)
+
+      done()
     })
   })
 })
