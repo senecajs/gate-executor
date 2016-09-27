@@ -292,7 +292,10 @@ function GateExecutor (options, instance_counter) {
     work.id = work.id || '' + s.work_counter
     work.ge = self.id
     work.tm = null == work.tm ? options.timeout : work.tm
-    work.dn = work.dn || work.fn.name || '' + Date.now()
+
+    work.dn = work.dn ||
+      work.fn.name ||
+      '' + Date.now()
 
     q.push(work)
 
