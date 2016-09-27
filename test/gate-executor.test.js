@@ -196,7 +196,7 @@ describe('gate-executor', function () {
       expect(log_all).to.deep.equal(Log_all_expected)
 
       // IMPORTANT: confirms memory usage is well-behaved
-      expect(process.memoryUsage().rss).below(70000000)
+      expect(process.memoryUsage().rss).below(71000000)
 
       done()
     }
