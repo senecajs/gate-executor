@@ -95,6 +95,11 @@ function GateExecutor (options, instance_counter) {
       return
     }
 
+    // The timeout interval check is stopped and started only as needed.
+    if (!self.isclear() && !s.tm_in) {
+      s.tm_in = setInterval(timeout_check, options.interval)
+    }
+
     // Process the next work item, returning `true` if there was one.
     do {
       var next = false
@@ -207,11 +212,11 @@ function GateExecutor (options, instance_counter) {
       work = timeout_checklist[i]
 
       if (!work.gate && !work.done && work.tm < now - work.start) {
-        work.callback()
-
         if (work.ontm) {
           work.ontm()
         }
+
+        work.callback()
       }
     }
   }
@@ -230,11 +235,6 @@ function GateExecutor (options, instance_counter) {
 
       if (firstclear) {
         s.firstclear = firstclear
-      }
-
-      // The timeout interval check is stopped and started only as needed.
-      if (!s.tm_in) {
-        s.tm_in = setInterval(timeout_check, options.interval)
       }
 
       processor()
