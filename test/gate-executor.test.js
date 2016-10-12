@@ -202,7 +202,7 @@ describe('gate-executor', function () {
         return
       }
 
-      expect(log).to.deep.equal([ 's-aa', 'e-aa', 's-bb', 't-bb', 'e-bb' ])
+      expect(log).to.deep.equal([ 's-aa', 'e-aa', 's-bb', 't-bb' ])
       done()
     })
 
