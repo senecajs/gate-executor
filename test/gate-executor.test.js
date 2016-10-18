@@ -168,6 +168,48 @@ describe('gate-executor', function () {
     }, 200)
   })
 
+  it('timeout after clear', function (done) {
+    var log = []
+
+    var ge = GateExecutor({ timeout: 200, interval: 11 })
+
+    var firstTime = true
+
+    ge.add({
+      fn: function aa (d) {
+        log.push('s-aa')
+        log.push('e-aa')
+        d()
+      }
+    })
+
+    ge.clear(function () {
+      if (firstTime) {
+        expect(log).to.deep.equal([ 's-aa', 'e-aa' ])
+        firstTime = false
+
+        ge.add({
+          tm: 50,
+          ontm: function () {
+            log.push('t-bb')
+          },
+          fn: function bb (d) {
+            log.push('s-bb')
+            setTimeout(function () { log.push('e-bb'); d() }, 150)
+          }
+        })
+
+        return
+      }
+
+      expect(log).to.deep.equal([ 's-aa', 'e-aa', 's-bb', 't-bb' ])
+      done()
+    })
+
+    ge.start()
+
+  })
+
 
   it('traverse', function (done) {
 
