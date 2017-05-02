@@ -441,6 +441,28 @@ describe('gate-executor', function () {
       done()
     })
   })
+
+  it('errors', function (done) {
+    // waiting on https://github.com/hapijs/lab/issues/703
+    done()
+
+    /*
+    try {
+      GateExecutor()
+        .add({
+          fn: function foo (done) {
+            throw new Error('foo')
+          }
+        })
+        .start()
+    }
+    catch(e) {
+     expect(e.message).to.equal('foo')
+      done()
+    }
+     */
+  })
+
 })
 
 
