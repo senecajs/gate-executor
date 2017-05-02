@@ -64,16 +64,16 @@ describe('gate-executor', function () {
     ge2.add({ fn: function ddd (d) { log.push('ddd'); d() } })
 
     expect(ge.state()).to.equal([
-      { s: 'w', ge: 1, d: 'aa', id: '1' },
-      { s: 'w', ge: 1, d: 'bb', id: '2' },
-      [ { s: 'w', ge: 2, d: 'ccc', id: '1' },
-        { s: 'w', ge: 2, d: 'ddd', id: '2' } ],
-      { s: 'w', ge: 1, d: 'dd', id: '4' } ])
+      { s: 'w', ge: 1, dn: 'aa', id: '1' },
+      { s: 'w', ge: 1, dn: 'bb', id: '2' },
+      [ { s: 'w', ge: 2, dn: 'ccc', id: '1' },
+        { s: 'w', ge: 2, dn: 'ddd', id: '2' } ],
+      { s: 'w', ge: 1, dn: 'dd', id: '4' } ])
 
     ge2.clear(function () {
       expect(log).to.equal(['aa', 'bb', 'ccc', 'ddd'])
       expect(ge.state()).to.equal([
-        { s: 'w', ge: 1, d: 'dd', id: '4' } ])
+        { s: 'w', ge: 1, dn: 'dd', id: '4' } ])
     })
 
     ge.clear(function () {
@@ -82,6 +82,30 @@ describe('gate-executor', function () {
     })
 
     ge.start()
+  })
+
+
+  it('desc', function (done) {
+    var log = []
+
+    var ge = GateExecutor()
+
+    ge.add({ fn: function (d) { log.push('aa'); d() } })
+    ge.add({ fn: function bb (d) { log.push('bb'); d() } })
+    ge.add({ dn: 'CC', fn: function cc (d) { log.push('cc'); d() } })
+
+    var s0 = ge.state()
+    s0[0].dn = Math.floor(s0[0].dn / 36e5) 
+    var m0 = [
+      { s: 'w', ge: 1, dn: Math.floor(Date.now() / 36e5), id: '1' },
+      { s: 'w', ge: 1, dn: 'bb', id: '2' },
+      { s: 'w', ge: 1, dn: 'CC', id: '3' }]
+
+    expect(s0[0]).to.equal(m0[0])
+    expect(s0[1]).to.equal(m0[1])
+    expect(s0[2]).to.equal(m0[2])
+
+    done()
   })
 
 
@@ -161,7 +185,7 @@ describe('gate-executor', function () {
     ge.start()
 
     setTimeout(function () {
-      expect(ge.state()).to.equal([ { s: 'a', ge: 1, d: 'bb', id: '2' } ])
+      expect(ge.state()).to.equal([ { s: 'a', ge: 1, dn: 'bb', id: '2' } ])
     }, 200)
   })
 
@@ -235,7 +259,7 @@ describe('gate-executor', function () {
       expect(log_all).to.equal(Log_all_expected)
 
       // IMPORTANT: confirms memory usage is well-behaved
-      expect(process.memoryUsage().rss).below(71000000)
+      expect(process.memoryUsage().rss).below(80000000)
 
       done()
     }

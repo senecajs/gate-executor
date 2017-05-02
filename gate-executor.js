@@ -345,7 +345,7 @@ function GateExecutor (options, instance_counter) {
     for (var hI = 0; hI < progress.history.length; ++hI) {
       var pe = progress.history[hI]
       if (!pe.done) {
-        out.push({s: 'a', ge: pe.ge, d: pe.dn, id: pe.id})
+        out.push({s: 'a', ge: pe.ge, dn: pe.dn, id: pe.id})
       }
     }
 
@@ -357,7 +357,7 @@ function GateExecutor (options, instance_counter) {
         out.push(qe.gate.state())
       }
       else {
-        out.push({s: 'w', ge: qe.ge, d: qe.dn, id: qe.id})
+        out.push({s: 'w', ge: qe.ge, dn: qe.dn, id: qe.id})
       }
     }
 

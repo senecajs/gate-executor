@@ -86,11 +86,11 @@ npm test
 
 [npm-badge]: https://badge.fury.io/js/gate-executor.svg
 [npm-url]: https://badge.fury.io/js/gate-executor
-[travis-badge]: https://api.travis-ci.org/rjrodger/gate-executor.svg
-[travis-url]: https://travis-ci.org/rjrodger/gate-executor
-[coveralls-badge]:https://coveralls.io/repos/rjrodger/gate-executor/badge.svg?branch=master&service=github
-[coveralls-url]: https://coveralls.io/github/rjrodger/gate-executor?branch=master
-[david-badge]: https://david-dm.org/rjrodger/gate-executor.svg
-[david-url]: https://david-dm.org/rjrodger/gate-executor
-[gitter-badge]: https://badges.gitter.im/rjrodger/gate-executor.svg
-[gitter-url]: https://gitter.im/rjrodger/gate-executor
+[travis-badge]: https://api.travis-ci.org/senecajs/gate-executor.svg
+[travis-url]: https://travis-ci.org/senecajs/gate-executor
+[coveralls-badge]:https://coveralls.io/repos/senecajs/gate-executor/badge.svg?branch=master&service=github
+[coveralls-url]: https://coveralls.io/github/senecajs/gate-executor?branch=master
+[david-badge]: https://david-dm.org/senecajs/gate-executor.svg
+[david-url]: https://david-dm.org/senecajs/gate-executor
+[gitter-badge]: https://badges.gitter.im/senecajs/seneca.svg
+[gitter-url]: https://gitter.im/senecajs/seneca
