@@ -6,11 +6,12 @@
   "scripts": {
     "test": "lab -v -P test -t 100 --shuffle -L -I Reflect",
     "annotate": "docco gate-executor.js -o doc",
-    "prettier": "prettier --write lib/transport.js --no-semi --single-quote"
+    "prettier": "prettier --write gate-executor.js --no-semi --single-quote",
+    "coveralls": "lab -s -P test -r lcov | coveralls"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/rjrodger/gate-executor.git"
+    "url": "https://github.com/senecajs/gate-executor.git"
   },
   "keywords": [
     "seneca",
@@ -30,6 +31,7 @@
   "dependencies": {},
   "devDependencies": {
     "code": "4.0.0",
+    "coveralls": "^2.13.1",
     "docco": "0.7.0",
     "lab": "13.0.4",
     "prettier": "1.2.2"
