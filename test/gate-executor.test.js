@@ -1,4 +1,4 @@
-/* Copyright (c) 2016 Richard Rodger, MIT License */
+/* Copyright (c) 2016-2017 Richard Rodger, MIT License */
 'use strict'
 
 var Lab = require('lab')
@@ -15,9 +15,11 @@ describe('gate-executor', function () {
   it('readme', function (done) {
     var ge = GateExecutor()
 
+    var log = []
+
     ge.add({
       fn: function first (done) {
-        console.log('first')
+        log.push('first')
         done()
       }
     })
@@ -26,28 +28,23 @@ describe('gate-executor', function () {
 
     ge.add({
       fn: function second (done) {
-        console.log('second')
+        log.push('second')
         done()
       }
     })
 
     subge.add({
       fn: function second (done) {
-        console.log('third')
+        log.push('third')
         done()
       }
     })
 
     ge.start(function () {
-      console.log('done')
+      log.push('done')
+      expect(log).to.equal([ 'first', 'third', 'second', 'done' ])
       done()
     })
-
-    // prints:
-    //   first
-    //   third
-    //   second
-    //   done
   })
 
   it('happy', function (done) {
@@ -66,7 +63,7 @@ describe('gate-executor', function () {
 
     ge2.add({ fn: function ddd (d) { log.push('ddd'); d() } })
 
-    expect(ge.state()).to.deep.equal([
+    expect(ge.state()).to.equal([
       { s: 'w', ge: 1, d: 'aa', id: '1' },
       { s: 'w', ge: 1, d: 'bb', id: '2' },
       [ { s: 'w', ge: 2, d: 'ccc', id: '1' },
@@ -74,13 +71,13 @@ describe('gate-executor', function () {
       { s: 'w', ge: 1, d: 'dd', id: '4' } ])
 
     ge2.clear(function () {
-      expect(log).to.deep.equal(['aa', 'bb', 'ccc', 'ddd'])
-      expect(ge.state()).to.deep.equal([
+      expect(log).to.equal(['aa', 'bb', 'ccc', 'ddd'])
+      expect(ge.state()).to.equal([
         { s: 'w', ge: 1, d: 'dd', id: '4' } ])
     })
 
     ge.clear(function () {
-      expect(log).to.deep.equal(['aa', 'bb', 'ccc', 'ddd', 'dd'])
+      expect(log).to.equal(['aa', 'bb', 'ccc', 'ddd', 'dd'])
       done()
     })
 
@@ -100,16 +97,16 @@ describe('gate-executor', function () {
     ge.clear(function () {
       ++cc
       if (1 === cc) {
-        expect(log).to.deep.equal(['aa', 'bb'])
+        expect(log).to.equal(['aa', 'bb'])
       }
       else if (2 === cc) {
-        expect(log).to.deep.equal(['aa', 'bb', 'cc'])
+        expect(log).to.equal(['aa', 'bb', 'cc'])
         done()
       }
     })
 
     ge.start(function () {
-      expect(log).to.deep.equal(['aa', 'bb'])
+      expect(log).to.equal(['aa', 'bb'])
     })
 
     setImmediate(function () {
@@ -156,7 +153,7 @@ describe('gate-executor', function () {
     })
 
     ge.clear(function () {
-      expect(log).to.deep.equal(
+      expect(log).to.equal(
         [ 's-aa', 's-bb', 's-cc', 's-dd', 't-dd', 'e-aa', 'e-cc', 'e-dd' ])
       done()
     })
@@ -164,7 +161,7 @@ describe('gate-executor', function () {
     ge.start()
 
     setTimeout(function () {
-      expect(ge.state()).to.deep.equal([ { s: 'a', ge: 1, d: 'bb', id: '2' } ])
+      expect(ge.state()).to.equal([ { s: 'a', ge: 1, d: 'bb', id: '2' } ])
     }, 200)
   })
 
@@ -185,7 +182,7 @@ describe('gate-executor', function () {
 
     ge.clear(function () {
       if (firstTime) {
-        expect(log).to.deep.equal([ 's-aa', 'e-aa' ])
+        expect(log).to.equal([ 's-aa', 'e-aa' ])
         firstTime = false
 
         ge.add({
@@ -202,7 +199,7 @@ describe('gate-executor', function () {
         return
       }
 
-      expect(log).to.deep.equal([ 's-aa', 'e-aa', 's-bb', 't-bb' ])
+      expect(log).to.equal([ 's-aa', 'e-aa', 's-bb', 't-bb' ])
       done()
     })
 
@@ -235,7 +232,7 @@ describe('gate-executor', function () {
     })
 
     function verify () {
-      expect(log_all).to.deep.equal(Log_all_expected)
+      expect(log_all).to.equal(Log_all_expected)
 
       // IMPORTANT: confirms memory usage is well-behaved
       expect(process.memoryUsage().rss).below(71000000)
@@ -331,7 +328,7 @@ describe('gate-executor', function () {
     })
 
     ge.start(function () {
-      expect(log).to.deep.equal([ 's-aa', 's-bb', 'e-aa', 'e-bb', 's-cc', 'e-cc' ])
+      expect(log).to.equal([ 's-aa', 's-bb', 'e-aa', 'e-bb', 's-cc', 'e-cc' ])
       done()
     })
   })
@@ -365,7 +362,7 @@ describe('gate-executor', function () {
     })
 
     ge.start(function () {
-      expect(log).to.deep.equal([ 's-aa', 's-bb', 'e-aa', 'e-bb' ])
+      expect(log).to.equal([ 's-aa', 's-bb', 'e-aa', 'e-bb' ])
       expect(ge.isclear()).to.equal(true)
       ge.pause()
 
@@ -378,10 +375,10 @@ describe('gate-executor', function () {
       })
 
       setTimeout(function () {
-        expect(log).to.deep.equal([ 's-aa', 's-bb', 'e-aa', 'e-bb' ])
+        expect(log).to.equal([ 's-aa', 's-bb', 'e-aa', 'e-bb' ])
 
         ge.start(function () {
-          expect(log).to.deep.equal(
+          expect(log).to.equal(
             [ 's-aa', 's-bb', 'e-aa', 'e-bb', 's-cc', 'e-cc' ])
           expect(ge.isclear()).to.equal(true)
           done()
