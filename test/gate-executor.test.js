@@ -90,11 +90,14 @@ describe('gate-executor', function () {
 
     var ge = GateExecutor()
 
-    ge.add({ fn: function (d) { log.push('aa'); d() } })
+    // hack to avoid an inferred function name
+    ge.add({ fn: [function (d) { log.push('aa'); d() }][0] })
+
     ge.add({ fn: function bb (d) { log.push('bb'); d() } })
     ge.add({ dn: 'CC', fn: function cc (d) { log.push('cc'); d() } })
 
     var s0 = ge.state()
+
     s0[0].dn = ''+Math.floor(parseInt(s0[0].dn, 10) / 36e5) 
     var m0 = [
       { s: 'w', ge: 1, dn: ''+Math.floor(Date.now() / 36e5), id: '1' },
