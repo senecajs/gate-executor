@@ -95,9 +95,9 @@ describe('gate-executor', function () {
     ge.add({ dn: 'CC', fn: function cc (d) { log.push('cc'); d() } })
 
     var s0 = ge.state()
-    s0[0].dn = Math.floor(s0[0].dn / 36e5) 
+    s0[0].dn = ''+Math.floor(parseInt(s0[0].dn, 10) / 36e5) 
     var m0 = [
-      { s: 'w', ge: 1, dn: Math.floor(Date.now() / 36e5), id: '1' },
+      { s: 'w', ge: 1, dn: ''+Math.floor(Date.now() / 36e5), id: '1' },
       { s: 'w', ge: 1, dn: 'bb', id: '2' },
       { s: 'w', ge: 1, dn: 'CC', id: '3' }]
 
