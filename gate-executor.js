@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2016 Richard Rodger, MIT License */
+/* Copyright (c) 2014-2019 Richard Rodger, MIT License */
 'use strict'
 
 // Core modules.
@@ -203,7 +203,7 @@ function GateExecutor(options, instance_counter) {
 
       if (!work.gate && !work.done && work.tm < now - work.start) {
         if (work.ontm) {
-          work.ontm(work.tm,now,work.start)
+          work.ontm(work.tm,work.start,now)
         }
 
         work.callback()
@@ -264,6 +264,7 @@ function GateExecutor(options, instance_counter) {
   //   * `id` (string): identifier for the work item. Optional.
   //   * `tm` (integer): millisecond timeout specific to this work item,
   //     overrides general timeout. Optional.
+  //   * `ontm` (function): callback to indicate work item timeout. Optional.
   //   * `dn` (string): description of the work item, used in the
   //     state description. Optional.
   self.add = function(work) {
@@ -280,6 +281,9 @@ function GateExecutor(options, instance_counter) {
 
     work.dn = work.dn || work.fn.name || '' + Date.now()
 
+    // Used by calling code to store additional context.
+    work.ctxt = {}
+    
     q.push(work)
 
     if (s.running) {

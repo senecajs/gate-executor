@@ -172,8 +172,8 @@ describe('gate-executor', function () {
 
     ge.add({
       tm: 50,
-      ontm: function (timeout, now, start) {
-        log.push('t-dd:'+timeout+':'+(now-start>timeout?'P':'F'))
+      ontm: function (timeout, start, end) {
+        log.push('t-dd:'+timeout+':'+(end-start>timeout?'P':'F'))
       },
       fn: function dd (d) {
         log.push('s-dd')

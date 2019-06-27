@@ -7,7 +7,11 @@
     "test": "lab -v -P test -t 100 --shuffle -L",
     "annotate": "docco gate-executor.js -o doc",
     "prettier": "prettier --write gate-executor.js",
-    "coveralls": "lab -s -P test -r lcov | coveralls"
+    "coveralls": "lab -s -P test -r lcov | coveralls",
+    "clean-npm": "rm -rf node_modules package-lock.json",
+    "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags",
+    "repo-publish": "npm run prettier && npm test && npm run annotate && npm run repo-tag && npm publish --access public"
+
   },
   "repository": {
     "type": "git",
