@@ -203,7 +203,7 @@ function GateExecutor(options, instance_counter) {
 
       if (!work.gate && !work.done && work.tm < now - work.start) {
         if (work.ontm) {
-          work.ontm(work.tm,work.start,now)
+          work.ontm(work.tm, work.start, now)
         }
 
         work.callback()
@@ -283,7 +283,7 @@ function GateExecutor(options, instance_counter) {
 
     // Used by calling code to store additional context.
     work.ctxt = {}
-    
+
     q.push(work)
 
     if (s.running) {
