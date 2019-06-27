@@ -1,12 +1,14 @@
-/* Copyright (c) 2016-2017 Richard Rodger, MIT License */
+/* Copyright (c) 2016-2018 Richard Rodger, MIT License */
 'use strict'
+
+var Util = require('util')
 
 var Lab = require('lab')
 var Code = require('code')
 
 var lab = exports.lab = Lab.script()
 var describe = lab.describe
-var it = lab.it
+var it = make_it(lab)
 var expect = Code.expect
 
 var GateExecutor = require('..')
@@ -467,3 +469,21 @@ describe('gate-executor', function () {
 
 
 var Log_all_expected = require('./log_all_expected.js')
+
+
+function make_it(lab) {
+  return function it(name, opts, func) {
+    if ('function' === typeof opts) {
+      func = opts
+      opts = {}
+    }
+    
+    lab.it(
+      name,
+      opts,
+      Util.promisify(function(x, fin) {
+        func(fin)
+      })
+    )
+  }
+}
