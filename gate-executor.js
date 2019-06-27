@@ -188,9 +188,9 @@ function GateExecutor(options, instance_counter) {
   }
 
   // To be run periodically via setInterval. For timed out work items,
-  // calls the done callback to allow work queue to proceed, and makes
+  // calls the done callback to allow work queue to proceed, and marks
   // the work item as finished. Work items can receive notification of
-  // timeouts by providing an `on_timeout` callback property in the
+  // timeouts by providing an `ontm` callback property in the
   // work definition object. Work items must handle timeout errors
   // themselves, gate-executor cares only for the fact that a timeout
   // happened, so it can continue processing.
@@ -203,7 +203,7 @@ function GateExecutor(options, instance_counter) {
 
       if (!work.gate && !work.done && work.tm < now - work.start) {
         if (work.ontm) {
-          work.ontm()
+          work.ontm(work.tm,now,work.start)
         }
 
         work.callback()
