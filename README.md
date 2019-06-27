@@ -8,7 +8,7 @@
 
 #### A work queue that can be gated, stopping to wait for sub-queues to complete.
 
-[Annotated Source](http://senecajs.github.io/gate-executor/doc/gate-executor.html)
+[Annotated Source](http://senecajs.github.io/gate-executor/gate-executor.html)
 
 A work execution queue that provides gating. Work items submitted to
 the queue are called in order, and execute concurrently. However, if
