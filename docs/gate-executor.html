@@ -604,7 +604,7 @@ happened, so it can continue processing.</p>
 
       <span class="hljs-keyword">if</span> (!work.gate &amp;&amp; !work.done &amp;&amp; work.tm &lt; now - work.start) {
         <span class="hljs-keyword">if</span> (work.ontm) {
-          work.ontm(work.tm,work.start,now)
+          work.ontm(work.tm, work.start, now)
         }
 
         work.callback()
@@ -770,7 +770,7 @@ state description. Optional.</li>
             </div>
             
             <div class="content"><div class='highlight'><pre>    work.ctxt = {}
-    
+
     q.push(work)
 
     <span class="hljs-keyword">if</span> (s.running) {</pre></div></div>

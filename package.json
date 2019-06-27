@@ -5,7 +5,7 @@
   "main": "gate-executor.js",
   "scripts": {
     "test": "lab -v -P test -t 100 --shuffle -L",
-    "annotate": "docco gate-executor.js -o doc",
+    "annotate": "docco gate-executor.js -o docs",
     "prettier": "prettier --write gate-executor.js",
     "coveralls": "lab -s -P test -r lcov | coveralls",
     "clean-npm": "rm -rf node_modules package-lock.json",
@@ -22,6 +22,14 @@
     "gate",
     "executor"
   ],
+  "files": [
+    "LICENSE",
+    "README.md",
+    "gate-executor.js"
+  ],
+  "engines": {
+    "node": ">=8.0.0"
+  },
   "author": "Richard Rodger (http://richardrodger.com)",
   "contributors": [
     "Jacob Pruitt (http://javascriptjake.com)",
