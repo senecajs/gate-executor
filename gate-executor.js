@@ -37,7 +37,7 @@ function GateExecutor(options, instance_counter) {
 
   self.id = ++instance_counter
   self.options = options
-  
+
   // Work queue.
   var q = []
 
