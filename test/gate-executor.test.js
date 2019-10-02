@@ -3,8 +3,8 @@
 
 var Util = require('util')
 
-var Lab = require('lab')
-var Code = require('code')
+var Lab = require('@hapi/lab')
+var Code = require('@hapi/code')
 
 var lab = exports.lab = Lab.script()
 var describe = lab.describe
@@ -199,6 +199,8 @@ describe('gate-executor', function () {
 
     var ge = GateExecutor({ timeout: 200, interval: 11 })
 
+    expect(ge.options).equal({ timeout: 200, interval: 11 })
+    
     var firstTime = true
 
     ge.add({
@@ -264,7 +266,7 @@ describe('gate-executor', function () {
       expect(log_all).to.equal(Log_all_expected)
 
       // IMPORTANT: confirms memory usage is well-behaved
-      expect(process.memoryUsage().rss).below(80000000)
+      expect(process.memoryUsage().rss).below(150000000)
 
       done()
     }
