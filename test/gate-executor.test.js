@@ -1,15 +1,63 @@
-/* Copyright (c) 2016-2018 Richard Rodger, MIT License */
+/* Copyright (c) 2016-2020 Richard Rodger, MIT License */
 'use strict'
+
+require('util.promisify/shim')()
+process.memoryUsage = process.memoryUsage || function(){return {rss:0}}
 
 var Util = require('util')
 
+var tests = []
+var print = void 0 === typeof(document) ? console.log : function(s,nl){
+  var out = document.querySelector('#out') // eslint-disable-line
+  out.innerHTML = out.innerHTML + s + (false===nl?' ':'<br>')
+}
+
 var Lab = require('@hapi/lab')
+
+Lab = null != Lab.script ? Lab : {
+  script: function(){
+    return {
+      it: web_it,
+      describe: web_describe
+    }
+  }
+}
+
+function web_it(name,opts,fn){
+  tests.push({name:name,opts:opts,fn:fn||opts})
+}
+
+function web_describe(name,testdef) {
+  print(name)
+  testdef()
+  
+  runtest(tests.shift())
+}
+
+
+function runtest(test) {
+  if(null == test) return;
+  
+  print(test.name,false)
+  test.fn(function(){}).then(function(err){
+    if(err) {
+      print('fail', err)
+    }
+    else {
+      print('pass')
+    }
+    runtest(tests.shift())
+  })
+}
+
+
 var Code = require('@hapi/code')
 
 var lab = exports.lab = Lab.script()
 var describe = lab.describe
 var it = make_it(lab)
 var expect = Code.expect
+
 
 var GateExecutor = require('..')
 
@@ -450,21 +498,21 @@ describe('gate-executor', function () {
     // waiting on https://github.com/hapijs/lab/issues/703
     done()
 
-    /*
-    try {
-      GateExecutor()
-        .add({
-          fn: function foo (done) {
-            throw new Error('foo')
-          }
-        })
-        .start()
-    }
-    catch(e) {
-     expect(e.message).to.equal('foo')
-      done()
-    }
-     */
+  
+    // try {
+    //   GateExecutor()
+    //     .add({
+    //       fn: function foo (done) {
+    //         throw new Error('foo')
+    //       }
+    //     })
+    //     .start()
+    // }
+    // catch(e) {
+    //  expect(e.message).to.equal('foo')
+    //   done()
+    // }
+
   })
 
 })
@@ -489,3 +537,4 @@ function make_it(lab) {
     )
   }
 }
+

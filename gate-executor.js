@@ -1,8 +1,11 @@
-/* Copyright (c) 2014-2019 Richard Rodger, MIT License */
+/* Copyright (c) 2014-2020 Richard Rodger, MIT License */
+/* $lab:coverage:off$ */
 'use strict'
 
 // Core modules.
 var Assert = require('assert')
+Assert =  'function' === typeof(Assert) ? Assert : function() {}
+/* $lab:coverage:on$ */
 
 // Create root instance. Exported as module.
 //   * `options` (object): instance options as key-value pairs.
