@@ -1,6 +1,6 @@
 {
   "name": "gate-executor",
-  "version": "2.1.0",
+  "version": "3.0.0",
   "description": "A work queue that can be gated, stopping to wait for sub-queues to complete.",
   "main": "gate-executor.js",
   "browser": "dist/gate-executor.min.js",

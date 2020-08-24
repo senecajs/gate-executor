@@ -4,7 +4,7 @@
 
 // Core modules.
 var Assert = require('assert')
-Assert =  'function' === typeof(Assert) ? Assert : function() {}
+Assert = 'function' === typeof Assert ? Assert : function () {}
 /* $lab:coverage:on$ */
 
 // Create root instance. Exported as module.
@@ -50,7 +50,7 @@ function GateExecutor(options, instance_counter) {
     lookup: {},
 
     // Work history - a list of work items in the order executed.
-    history: []
+    history: [],
   }
 
   // List of work items to check for timeouts.
@@ -83,7 +83,7 @@ function GateExecutor(options, instance_counter) {
     // Timeout interval reference value returned by `setInterval`.
     // Timeouts are not checked using `setTimeout`, as it is more
     // efficient, and more than sufficient, to check timeouts periodically.
-    tm_in: null
+    tm_in: null,
   }
 
   // Process the next work item.
@@ -219,11 +219,11 @@ function GateExecutor(options, instance_counter) {
   // Can be called at anytime, interspersed with calls to other
   // methods, including `add`. Takes a function as argument, which is
   // called only once on the next time the queues are clear.
-  self.start = function(firstclear) {
+  self.start = function (firstclear) {
     Assert(null == firstclear || 'function' === typeof firstclear)
 
     // Allow API chaining by not starting in current execution path.
-    setImmediate(function() {
+    setImmediate(function () {
       s.running = true
 
       if (firstclear) {
@@ -240,21 +240,21 @@ function GateExecutor(options, instance_counter) {
   // not yet started, will not proceed, but items already in progress
   // will complete, and the clear function will be called once all in
   // progress items finish.
-  self.pause = function() {
+  self.pause = function () {
     s.running = false
   }
 
   // Submit a function that will be called each time there are no more
   // work items to process. Multiple calls to this method will replace
   // the previously registered clear function.
-  self.clear = function(done) {
+  self.clear = function (done) {
     Assert('function' === typeof done)
     s.clear = done
     return self
   }
 
   // Returns `true` when there are no more work items to process.
-  self.isclear = function() {
+  self.isclear = function () {
     return 0 === q.length && 0 === progress.history.length
   }
 
@@ -271,7 +271,7 @@ function GateExecutor(options, instance_counter) {
   //   * `ontm` (function): callback to indicate work item timeout. Optional.
   //   * `dn` (string): description of the work item, used in the
   //     state description. Optional.
-  self.add = function(work) {
+  self.add = function (work) {
     Assert('object' === typeof work)
     Assert('function' === typeof work.fn)
     Assert(null == work.id || 'string' === typeof work.id)
@@ -309,7 +309,7 @@ function GateExecutor(options, instance_counter) {
   // structure that requires breadth-first traversal in terms of the
   // work item queue. Gates do not have timeouts, and can only be
   // cleared when all added work items complete.
-  self.gate = function() {
+  self.gate = function () {
     var ge = new GateExecutor(options, instance_counter)
 
     var fn = function gate(done) {
@@ -327,7 +327,7 @@ function GateExecutor(options, instance_counter) {
   // Return a data structure describing the current state of the work
   // queues, and organised as a tree structure indicating the gating
   // relationships.
-  self.state = function() {
+  self.state = function () {
     var out = []
 
     // First list any in-progress work items.
@@ -353,7 +353,7 @@ function GateExecutor(options, instance_counter) {
       qlen: q.length,
       hlen: progress.history.length,
       klen: Object.keys(progress.lookup).length,
-      tlen: timeout_check.length
+      tlen: timeout_check.length,
     }
 
     return out
