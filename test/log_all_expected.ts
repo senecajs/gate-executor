@@ -1,4 +1,4 @@
-module.exports =
+const LOG_ALL_EXPECTED =
 [ [ 'a_p_0_g_0' ],
   [ 'a_p_0_g_0', 'a_p_1_g_0' ],
   [ 'a_p_0_g_0', 'a_p_1_g_0', 'a_p_2_g_0' ],
@@ -1265,3 +1265,7 @@ module.exports =
   [ 'g_p_0_g_0', 'g_p_1_g_1', 'g_p_2_g_2', 'g_p_3_g_3', 'g_p_4_g_2' ],
   [ 'g_p_0_g_0', 'g_p_1_g_1', 'g_p_2_g_2', 'g_p_3_g_3', 'g_p_4_g_3' ],
   [ 'g_p_0_g_0', 'g_p_1_g_1', 'g_p_2_g_2', 'g_p_3_g_3', 'g_p_4_g_4' ] ]
+
+export {
+  LOG_ALL_EXPECTED
+}

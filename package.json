@@ -3,16 +3,20 @@
   "version": "3.0.0",
   "description": "A work queue that can be gated, stopping to wait for sub-queues to complete.",
   "main": "gate-executor.js",
-  "browser": "dist/gate-executor.min.js",
+  "browser": "gate-executor.min.js",
+  "type": "commonjs",
+  "types": "gate-executor.d.ts",
   "scripts": {
-    "test": "lab -v -P test -t 100 --shuffle -L -I document -r console -o stdout -r html -o test/coverage.html",
-    "test-web": "browserify -o test-web/get.js -e test/gate-executor.test.js -s GateExecutor -im -i assert -i @hapi/lab && open test-web/index.html",
-    "build": "browserify -o dist/gate-executor.min.js -e gate-executor.js -s GateExecutor -im -i assert -i @hapi/lab -p tinyify",
-    "prettier": "prettier --write gate-executor.js",
-    "coveralls": "lab -s -P test -r lcov | coveralls",
-    "clean-npm": "rm -rf node_modules package-lock.json",
-    "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags",
-    "repo-publish": "npm run clean-npm && npm i --registry http://registry.npmjs.org && npm run prettier && npm test && npm run build && npm run test-web && npm run repo-tag && npm publish --access public --registry http://registry.npmjs.org"
+    "test": "jest --coverage --no-cache",
+    "test-some": "jest --no-cache -t",
+    "test-watch": "jest --coverage --watchAll",
+    "watch": "tsc -w -d",
+    "build": "tsc -d && cp gate-executor.js gate-executor.min.js && browserify -o gate-executor.min.js -e gate-executor.js -s @GateExecutor -im -i assert -p tinyify",
+    "reset": "npm run clean && npm i && npm build && npm test",
+    "clean": "rm -rf node_modules yarn.lock package-lock.json",
+    "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
+    "repo-publish": "npm run clean && npm i && npm run repo-publish-quick",
+    "repo-publish-quick": "npm run prettier && npm run build && npm run test && npm run repo-tag && npm publish --access public --registry https://registry.npmjs.org "
   },
   "repository": {
     "type": "git",
@@ -26,13 +30,12 @@
   "files": [
     "LICENSE",
     "README.md",
-    "gate-executor.js",
-    "dist"
+    "gate-executor.*"
   ],
   "engines": {
-    "node": ">=8.0.0"
+    "node": ">=12.0.0"
   },
-  "author": "Richard Rodger (http://richardrodger.com)",
+  "author": "Richard Rodger (https://richardrodger.com)",
   "contributors": [
     "Jacob Pruitt (http://javascriptjake.com)",
     "Wyatt Preul (http://jsgeek.com)"
@@ -44,13 +47,14 @@
   "homepage": "https://github.com/senecajs/gate-executor",
   "dependencies": {},
   "devDependencies": {
-    "@hapi/code": "^8.0.2",
-    "@hapi/lab": "^23.0.0",
-    "browserify": "^16.5.2",
-    "coveralls": "^3.1.0",
-    "detective": "^5.2.0",
-    "prettier": "^2.1.0",
+    "@types/jest": "^27.0.2",
+    "browserify": "^17.0.0",
+    "esbuild": "^0.13.5",
+    "esbuild-jest": "^0.5.0",
+    "jest": "^27.2.5",
     "tinyify": "^3.0.0",
-    "util.promisify": "^1.0.1"
+    "ts-jest": "^27.0.5",
+    "typescript": "^4.4.4",
+    "util.promisify": "^1.1.1"
   }
 }
