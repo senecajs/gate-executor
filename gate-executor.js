@@ -56,6 +56,8 @@ function GateExecutor(options, instance_counter) {
         // Timeouts are not checked using `setTimeout`, as it is more
         // efficient, and more than sufficient, to check timeouts periodically.
         tm_in: null,
+        hw_tmc: 0,
+        hw_hst: 0,
     };
     // Process the next work item.
     function processor() {
@@ -80,6 +82,8 @@ function GateExecutor(options, instance_counter) {
                 // Add work item to the work-in-progress set.
                 progress.lookup[work.id] = work;
                 progress.history.push(work);
+                s.hw_hst =
+                    progress.history.length > s.hw_hst ? progress.history.length : s.hw_hst;
                 // If work item is a gate, set the state of the instance as
                 // gated.  This work item will need to complete before later
                 // work items in the queue can be processed.
@@ -92,6 +96,8 @@ function GateExecutor(options, instance_counter) {
                 work.start = Date.now();
                 work.callback = make_work_fn_callback(work);
                 timeout_checklist.push(work);
+                s.hw_tmc =
+                    timeout_checklist.length > s.hw_tmc ? timeout_checklist.length : s.hw_tmc;
                 work.fn(work.callback);
                 next = true;
             }
@@ -104,6 +110,7 @@ function GateExecutor(options, instance_counter) {
             if (work.done) {
                 return;
             }
+            work.end = Date.now();
             // Remove the work item from the work-in-progress set.  As
             // work items may complete out of order, prune the history
             // from the front until the first incomplete work
@@ -272,6 +279,8 @@ function GateExecutor(options, instance_counter) {
             hlen: progress.history.length,
             klen: Object.keys(progress.lookup).length,
             tlen: timeout_check.length,
+            hw_hst: s.hw_hst,
+            hw_tmc: s.hw_tmc,
         };
         return out;
     };

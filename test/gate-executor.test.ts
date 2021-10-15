@@ -5,9 +5,9 @@ import GateExecutor from '..'
 import { LOG_ALL_EXPECTED } from './log_all_expected'
 
 
-
 describe('gate-executor', () => {
   test('basic', (done) => {
+    jest.useFakeTimers()
 
     var ge: any = GateExecutor()
 
@@ -26,11 +26,13 @@ describe('gate-executor', () => {
 
       done()
     })
+    jest.runAllTimers()
   })
 
 
 
   test('readme', (done) => {
+    jest.useFakeTimers()
 
     var ge: any = GateExecutor()
 
@@ -65,9 +67,12 @@ describe('gate-executor', () => {
 
       done()
     })
+    jest.runAllTimers()
   })
 
+
   it('happy', function(done: any) {
+    jest.useFakeTimers()
     var log: any[] = []
 
     var ge: any = GateExecutor({})
@@ -102,10 +107,12 @@ describe('gate-executor', () => {
     })
 
     ge.start()
+    jest.runAllTimers()
   })
 
 
   it('desc', function(done: any) {
+    jest.useFakeTimers()
     var log: any[] = []
 
     var ge: any = GateExecutor({})
@@ -133,6 +140,7 @@ describe('gate-executor', () => {
 
 
   it('running', function(done: any) {
+    jest.useFakeTimers()
     var log: any[] = []
 
     var ge: any = GateExecutor({})
@@ -155,14 +163,18 @@ describe('gate-executor', () => {
     ge.start(function() {
       expect(log).toMatchObject(['aa', 'bb'])
     })
-
     setImmediate(function() {
       ge.add({ fn: function cc(d: any) { log.push('cc'); d() } })
     })
+    jest.runAllTimers()
+
+
   })
 
 
-  it('timeout', function(done: any) {
+  it('timeout-basic', function(done: any) {
+    jest.useFakeTimers()
+
     var log: any[] = []
 
     var ge: any = GateExecutor({ timeout: 200, interval: 11 })
@@ -206,13 +218,13 @@ describe('gate-executor', () => {
     })
 
     ge.start()
-
-    setTimeout(function() {
-      expect(JJ(ge.state())).toMatchObject([{ s: 'a', ge: 1, dn: 'bb', id: '2' }])
-    }, 200)
+    jest.runAllTimers()
   })
 
-  it('timeout after clear', function(done: any) {
+
+  it('timeout-after-clear', function(done: any) {
+    jest.useFakeTimers()
+
     var log: any = []
 
     var ge: any = GateExecutor({ timeout: 200, interval: 11 })
@@ -253,12 +265,12 @@ describe('gate-executor', () => {
     })
 
     ge.start()
-
+    jest.runAllTimers()
   })
 
 
   it('traverse', function(done: any) {
-
+    jest.useFakeTimers()
     var all = descend([], 1, 0)
 
     var ge_all = []
@@ -278,6 +290,7 @@ describe('gate-executor', () => {
           verify()
         }
       })
+      jest.runAllTimers()
     })
 
     function verify() {
@@ -343,7 +356,9 @@ describe('gate-executor', () => {
     }
   })
 
+
   it('gate-timeout', function(done: any) {
+    jest.useFakeTimers()
     var log: any[] = []
 
     var ge: any = GateExecutor({ timeout: 200, interval: 11 })
@@ -382,10 +397,13 @@ describe('gate-executor', () => {
       expect(log).toMatchObject(['s-aa', 's-bb', 'e-aa', 'e-bb', 's-cc', 'e-cc'])
       done()
     })
+
+    jest.runAllTimers()
   })
 
 
   it('start-pause', function(done: any) {
+    jest.useRealTimers()
     var log: any[] = []
     var ge: any = GateExecutor({ timeout: 200, interval: 11 })
 
@@ -400,6 +418,7 @@ describe('gate-executor', () => {
     expect(ge.isclear()).toEqual(false)
 
     ge.start()
+
     ge.add({
       fn: function(d: any) {
         log.push('s-bb')
@@ -439,6 +458,7 @@ describe('gate-executor', () => {
   })
 
   it('memory', function(done: any) {
+    jest.useFakeTimers()
     var ge: any = GateExecutor({})
     var start = Date.now()
 
@@ -464,31 +484,11 @@ describe('gate-executor', () => {
 
       done()
     })
-  })
-
-  it('errors', function(done: any) {
-    // waiting on https://github.com/hapijs/lab/issues/703
-    done()
-
-
-    // try {
-    //   GateExecutor()
-    //     .add({
-    //       fn: function foo (done: any) {
-    //         throw new Error('foo')
-    //       }
-    //     })
-    //     .start()
-    // }
-    // catch(e) {
-    //  expect(e.message).toMatchObject('foo')
-    //   done()
-    // }
-
+    jest.runAllTimers()
   })
 
 })
 
 
 // Normalize arrays with properties.
-const JJ = (x) => JSON.parse(JSON.stringify(x))
+const JJ = (x: any) => JSON.parse(JSON.stringify(x))

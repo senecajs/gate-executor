@@ -1,5 +1,21 @@
 /* Copyright (c) 2014-2021 Richard Rodger, MIT License */
 
+
+type Work = {
+  id: string // Identifier
+  ge: string // GateExecutor identifier
+  tm: number // Timeout
+  dn: string // Description
+  fn: (callback: () => void) => void
+  start: number
+  end: number
+  gate?: any
+  callback: () => void
+  ctxt: { [key: string]: any }
+}
+
+
+
 // Create root instance. Exported as module.
 //   * `options` (object): instance options as key-value pairs.
 //
@@ -26,7 +42,7 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
   self.options = options
 
   // Work queue.
-  let q: any[] = []
+  let q: Work[] = []
 
   // Work-in-progress set.
   let progress: any = {
@@ -68,7 +84,13 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
     // Timeouts are not checked using `setTimeout`, as it is more
     // efficient, and more than sufficient, to check timeouts periodically.
     tm_in: null,
+
+    hw_tmc: 0,
+    hw_hst: 0,
+
   }
+
+
 
   // Process the next work item.
   function processor() {
@@ -98,6 +120,9 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
         progress.lookup[work.id] = work
         progress.history.push(work)
 
+        s.hw_hst =
+          progress.history.length > s.hw_hst ? progress.history.length : s.hw_hst
+
         // If work item is a gate, set the state of the instance as
         // gated.  This work item will need to complete before later
         // work items in the queue can be processed.
@@ -112,6 +137,9 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
         work.callback = make_work_fn_callback(work)
 
         timeout_checklist.push(work)
+        s.hw_tmc =
+          timeout_checklist.length > s.hw_tmc ? timeout_checklist.length : s.hw_tmc
+
         work.fn(work.callback)
 
         next = true
@@ -126,6 +154,8 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
       if (work.done) {
         return
       }
+
+      work.end = Date.now()
 
       // Remove the work item from the work-in-progress set.  As
       // work items may complete out of order, prune the history
@@ -249,7 +279,7 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
   //   * `ontm` (function): callback to indicate work item timeout. Optional.
   //   * `dn` (string): description of the work item, used in the
   //     state description. Optional.
-  self.add = function(work: any) {
+  self.add = function(work: Work) {
     s.work_counter += 1
     work.id = work.id || '' + s.work_counter
     work.ge = self.id
@@ -326,6 +356,8 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
       hlen: progress.history.length,
       klen: Object.keys(progress.lookup).length,
       tlen: timeout_check.length,
+      hw_hst: s.hw_hst,
+      hw_tmc: s.hw_tmc,
     }
 
     return out
