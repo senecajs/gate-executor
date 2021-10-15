@@ -1,6 +1,6 @@
 {
   "name": "gate-executor",
-  "version": "3.0.0",
+  "version": "3.1.1",
   "description": "A work queue that can be gated, stopping to wait for sub-queues to complete.",
   "main": "gate-executor.js",
   "browser": "gate-executor.min.js",
@@ -12,11 +12,11 @@
     "test-watch": "jest --coverage --watchAll",
     "watch": "tsc -w -d",
     "build": "tsc -d && cp gate-executor.js gate-executor.min.js && browserify -o gate-executor.min.js -e gate-executor.js -s @GateExecutor -im -i assert -p tinyify",
-    "reset": "npm run clean && npm i && npm build && npm test",
+    "reset": "npm run clean && npm i && npm run build && npm test",
     "clean": "rm -rf node_modules yarn.lock package-lock.json",
     "repo-tag": "REPO_VERSION=`node -e \"console.log(require('./package').version)\"` && echo TAG: v$REPO_VERSION && git commit -a -m v$REPO_VERSION && git push && git tag v$REPO_VERSION && git push --tags;",
     "repo-publish": "npm run clean && npm i && npm run repo-publish-quick",
-    "repo-publish-quick": "npm run prettier && npm run build && npm run test && npm run repo-tag && npm publish --access public --registry https://registry.npmjs.org "
+    "repo-publish-quick": "npm run build && npm run test && npm run repo-tag && npm publish --access public --registry https://registry.npmjs.org "
   },
   "repository": {
     "type": "git",
@@ -49,11 +49,11 @@
   "devDependencies": {
     "@types/jest": "^27.0.2",
     "browserify": "^17.0.0",
-    "esbuild": "^0.13.5",
+    "esbuild": "^0.13.6",
     "esbuild-jest": "^0.5.0",
     "jest": "^27.2.5",
     "tinyify": "^3.0.0",
-    "ts-jest": "^27.0.5",
+    "ts-jest": "^27.0.6",
     "typescript": "^4.4.4",
     "util.promisify": "^1.1.1"
   }
