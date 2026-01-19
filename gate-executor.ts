@@ -159,19 +159,19 @@ function GateExecutor(this: any, options: any, instance_counter: number) {
 
       // Remove the work item from the work-in-progress set.  As
       // work items may complete out of order, prune the history
-      // from the front until the first incomplete work
-      // item. Later complete work items will eventually be
-      // reached on another processing round.
+      // of all work items that are complete.Later complete work items
+      // will eventually be reached on another processing round.
+
       work.done = true
       delete progress.lookup[work.id]
 
-      while (progress.history[0] && progress.history[0].done) {
-        progress.history.shift()
-      }
+      progress.history = progress.history.filter((workItem: any) => {
+        return !workItem.done
+      })
 
-      while (timeout_checklist[0] && timeout_checklist[0].done) {
-        timeout_checklist.shift()
-      }
+      timeout_checklist = timeout_checklist.filter((workItem: any) => {
+        return !workItem.done
+      })
 
       // If the work item was a gate, it is now complete, and the
       // instance can be ungated, allowing later work items in the

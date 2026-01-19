@@ -1,6 +1,6 @@
 {
   "name": "gate-executor",
-  "version": "3.2.1",
+  "version": "3.3.0",
   "description": "A work queue that can be gated, stopping to wait for sub-queues to complete.",
   "main": "gate-executor.js",
   "browser": "gate-executor.min.js",
@@ -49,7 +49,7 @@
   "devDependencies": {
     "@types/jest": "^30.0.0",
     "browserify": "^17.0.1",
-    "esbuild": "^0.27.1",
+    "esbuild": "^0.27.2",
     "esbuild-jest": "^0.5.0",
     "jest": "^30.2.0",
     "tinyify": "^4.0.0",
